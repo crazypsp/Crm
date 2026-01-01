@@ -21,10 +21,10 @@ namespace Crm.Business.Banking
 
                     var ok = rule.MatchType switch
                     {
-                        MatchType.Contains => tx.Description.Contains(rule.Pattern, StringComparison.OrdinalIgnoreCase),
-                        MatchType.StartsWith => tx.Description.StartsWith(rule.Pattern, StringComparison.OrdinalIgnoreCase),
-                        MatchType.Equals => string.Equals(tx.Description.Trim(), rule.Pattern.Trim(), StringComparison.OrdinalIgnoreCase),
-                        MatchType.Regex => Regex.IsMatch(tx.Description, rule.Pattern, RegexOptions.IgnoreCase),
+                        Entities.Enums.MatchType.Contains => tx.Description.Contains(rule.Pattern, StringComparison.OrdinalIgnoreCase),
+                        Entities.Enums.MatchType.StartsWith => tx.Description.StartsWith(rule.Pattern, StringComparison.OrdinalIgnoreCase),
+                        Entities.Enums.MatchType.Equals => string.Equals(tx.Description.Trim(), rule.Pattern.Trim(), StringComparison.OrdinalIgnoreCase),
+                        Entities.Enums.MatchType.Regex => Regex.IsMatch(tx.Description, rule.Pattern, RegexOptions.IgnoreCase),
                         _ => false
                     };
 

@@ -57,13 +57,18 @@ public class CrmDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     {
         base.OnModelCreating(b);
 
-        // Finansal alanlar - muhasebede precision standardı
+        // =========================================================
+        // 1) Finansal alanlar - muhasebede precision standardı
+        // =========================================================
         b.Entity<BankTransaction>().Property(x => x.Amount).HasPrecision(18, 2);
         b.Entity<BankTransaction>().Property(x => x.BalanceAfter).HasPrecision(18, 2);
         b.Entity<VoucherDraftLine>().Property(x => x.Debit).HasPrecision(18, 2);
         b.Entity<VoucherDraftLine>().Property(x => x.Credit).HasPrecision(18, 2);
 
-        // İdempotency & performans: import içindeki satır numarası benzersiz
+        // =========================================================
+        // 2) Index/unique kuralları
+        // =========================================================
+        // Import içindeki satır numarası benzersiz (idempotency)
         b.Entity<BankTransaction>()
             .HasIndex(x => new { x.TenantId, x.ImportId, x.RowNo })
             .IsUnique();
@@ -73,8 +78,80 @@ public class CrmDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
             .HasIndex(x => new { x.TenantId, x.CompanyId, x.AccountingBankAccountCode })
             .IsUnique();
 
-        // Demo seed (migration sırasında InsertData üretmek için HasData kullanıyoruz)
-        // Öneri: InitialCreate migration'ını önce seed olmadan üret, sonra bu satırı ekle, AddDemoSeed migration üret.
+        // =========================================================
+        // 3) İLİŞKİLER (kritik)
+        // =========================================================
+
+        // 3.1 BankAccount -> Company (CompanyId1 shadow FK problemini çözer)
+        // Neden: Navigation üzerinden tek ilişkiyi netleştirir, EF'nin ikinci ilişki üretmesini engeller.
+        b.Entity<BankAccount>(e =>
+        {
+            e.HasOne(x => x.Company)
+             .WithMany(c => c.BankAccounts)
+             .HasForeignKey(x => x.CompanyId)
+             .OnDelete(DeleteBehavior.NoAction); // soft delete kullandığın için doğru
+        });
+
+        // 3.2 BankStatementImport ilişkileri (multiple cascade path riskini kapatır)
+        b.Entity<BankStatementImport>(e =>
+        {
+            e.HasOne(x => x.Company)
+             .WithMany()
+             .HasForeignKey(x => x.CompanyId)
+             .OnDelete(DeleteBehavior.NoAction);
+
+            e.HasOne(x => x.BankAccount)
+             .WithMany()
+             .HasForeignKey(x => x.BankAccountId)
+             .OnDelete(DeleteBehavior.NoAction);
+
+            e.HasOne(x => x.Template)
+             .WithMany()
+             .HasForeignKey(x => x.TemplateId)
+             .OnDelete(DeleteBehavior.NoAction);
+
+            e.HasOne(x => x.SourceFile)
+             .WithMany()
+             .HasForeignKey(x => x.SourceFileId)
+             .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // 3.3 BankTransaction -> Import
+        // Neden: Import silinirse transaction’lar cascade ile gitmesin; soft delete tercih.
+        b.Entity<BankTransaction>(e =>
+        {
+            e.HasOne(x => x.Import)
+             .WithMany(i => i.Transactions)
+             .HasForeignKey(x => x.ImportId)
+             .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // 3.4 VoucherDraft -> Import
+        b.Entity<VoucherDraft>(e =>
+        {
+            e.HasOne(x => x.Import)
+             .WithMany()
+             .HasForeignKey(x => x.ImportId)
+             .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // 3.5 VoucherDraftLine -> VoucherDraft
+        b.Entity<VoucherDraftLine>(e =>
+        {
+            e.HasOne(x => x.VoucherDraft)
+             .WithMany(d => d.Lines)
+             .HasForeignKey(x => x.VoucherDraftId)
+             .OnDelete(DeleteBehavior.NoAction);
+        });
+        foreach (var fk in b.Model.GetEntityTypes().SelectMany(t => t.GetForeignKeys()))
+        {
+            if (fk.IsOwnership) continue;
+            fk.DeleteBehavior = DeleteBehavior.NoAction;
+        }
+        // =========================================================
+        // 4) Demo seed
+        // =========================================================
+        // Öneri: İlk migration'ı seed olmadan üret; sonra seed'i ekleyip ikinci migration üret.
         DemoSeedData.Apply(b);
     }
 }

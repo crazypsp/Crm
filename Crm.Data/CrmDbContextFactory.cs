@@ -9,7 +9,7 @@ public sealed class CrmDbContextFactory : IDesignTimeDbContextFactory<CrmDbConte
     {
         var options = new DbContextOptionsBuilder<CrmDbContext>()
             // Burayı kendi lokal SQL Server'ına göre güncelle
-            .UseSqlServer("Server=.;Database=CrmSuiteDb;Trusted_Connection=True;TrustServerCertificate=True")
+            .UseSqlServer("Server=DESKTOP-54QF28R\\ZRV2014EXP;Database=CrmSuiteDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True")
             .Options;
 
         return new CrmDbContext(options);
