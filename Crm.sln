@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Services", "Crm.Service
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Gateway", "Crm.Api.Gateway\Crm.Api.Gateway.csproj", "{D2F4DA24-214C-4F57-989D-05B2CA7B930E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Agent", "Crm.Api.Agent\Crm.Api.Agent.csproj", "{A3B2626C-0CDA-4DF9-A822-F48122ED8344}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{D2F4DA24-214C-4F57-989D-05B2CA7B930E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2F4DA24-214C-4F57-989D-05B2CA7B930E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2F4DA24-214C-4F57-989D-05B2CA7B930E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3B2626C-0CDA-4DF9-A822-F48122ED8344}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3B2626C-0CDA-4DF9-A822-F48122ED8344}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3B2626C-0CDA-4DF9-A822-F48122ED8344}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3B2626C-0CDA-4DF9-A822-F48122ED8344}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

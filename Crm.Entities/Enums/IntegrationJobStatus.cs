@@ -11,6 +11,7 @@ namespace Crm.Entities.Enums
         Queued = 1,
         Running = 2,
         Succeeded = 3,
+        InProgress,
         Failed = 99
     }
 }
