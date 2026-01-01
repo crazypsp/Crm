@@ -1,0 +1,6 @@
+@Crm.Api.Banking_HostAddress = http://localhost:5222
+
+GET {{Crm.Api.Banking_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
