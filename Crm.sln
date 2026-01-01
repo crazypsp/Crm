@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Banking", "Crm.Api.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Documents", "Crm.Api.Documents\Crm.Api.Documents.csproj", "{180690BD-4E1F-4302-8141-4DD11CD2717D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Work", "Crm.Api.Work\Crm.Api.Work.csproj", "{2B6B2FFA-FE27-4E4F-9E14-D7E161630F2B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,10 @@ Global
 		{180690BD-4E1F-4302-8141-4DD11CD2717D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{180690BD-4E1F-4302-8141-4DD11CD2717D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{180690BD-4E1F-4302-8141-4DD11CD2717D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B6B2FFA-FE27-4E4F-9E14-D7E161630F2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B6B2FFA-FE27-4E4F-9E14-D7E161630F2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B6B2FFA-FE27-4E4F-9E14-D7E161630F2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B6B2FFA-FE27-4E4F-9E14-D7E161630F2B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
