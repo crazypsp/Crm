@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Documents", "Crm.Ap
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Reporting", "Crm.Api.Reporting\Crm.Api.Reporting.csproj", "{6506EC2F-43D3-4A45-884E-DB6C675BC999}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Admin", "Crm.Api.Admin\Crm.Api.Admin.csproj", "{17C696D8-0881-41CD-9E90-7DBAAF5181C6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +83,10 @@ Global
 		{6506EC2F-43D3-4A45-884E-DB6C675BC999}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6506EC2F-43D3-4A45-884E-DB6C675BC999}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6506EC2F-43D3-4A45-884E-DB6C675BC999}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17C696D8-0881-41CD-9E90-7DBAAF5181C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17C696D8-0881-41CD-9E90-7DBAAF5181C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17C696D8-0881-41CD-9E90-7DBAAF5181C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17C696D8-0881-41CD-9E90-7DBAAF5181C6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
