@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Documents", "Crm.Ap
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Import", "Crm.Api.Import\Crm.Api.Import.csproj", "{7E30BEBB-3FEF-4A85-84F6-0D1DBB913C60}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Shared", "Crm.Api.Shared\Crm.Api.Shared.csproj", "{13B75EBC-2B5A-45A0-AAF0-F51122171C0C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -93,6 +95,10 @@ Global
 		{7E30BEBB-3FEF-4A85-84F6-0D1DBB913C60}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7E30BEBB-3FEF-4A85-84F6-0D1DBB913C60}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7E30BEBB-3FEF-4A85-84F6-0D1DBB913C60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13B75EBC-2B5A-45A0-AAF0-F51122171C0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13B75EBC-2B5A-45A0-AAF0-F51122171C0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13B75EBC-2B5A-45A0-AAF0-F51122171C0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13B75EBC-2B5A-45A0-AAF0-F51122171C0C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
