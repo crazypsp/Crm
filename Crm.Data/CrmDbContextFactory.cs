@@ -7,11 +7,14 @@ public sealed class CrmDbContextFactory : IDesignTimeDbContextFactory<CrmDbConte
 {
     public CrmDbContext CreateDbContext(string[] args)
     {
-        var options = new DbContextOptionsBuilder<CrmDbContext>()
-            // Burayı kendi lokal SQL Server'ına göre güncelle
-            .UseSqlServer("Server=DESKTOP-54QF28R\\ZRV2014EXP;Database=CrmSuiteDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True")
-            .Options;
+        var options = new DbContextOptionsBuilder<CrmDbContext>();
 
-        return new CrmDbContext(options);
+        // Neden: Design-time migration sırasında startup bağımlılığını azaltmak.
+        // Burayı kendi local connection string'in ile güncelle.
+        options.UseSqlServer(
+            "Server=DESKTOP-54QF28R\\ZRV2014EXP;Database=CrmSuiteDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
+        );
+
+        return new CrmDbContext(options.Options);
     }
 }

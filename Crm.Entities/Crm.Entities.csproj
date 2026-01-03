@@ -4,14 +4,12 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
-<!-- IdentityUser<Guid>, IdentityRole<Guid> gibi tipler için -->
+  <!-- Neden: IdentityUser/IdentityRole gibi tipler Microsoft.AspNetCore.App shared framework içindedir.
+       Class Library projeleri bunu otomatik referanslamaz. -->
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.App" Version="2.2.8" />
-  </ItemGroup>
+
 </Project>
