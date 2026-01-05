@@ -2,19 +2,16 @@
 
 namespace Crm.Api.Import.Parsing
 {
+    /// <summary>
+    /// Neden: Excel/PDF farklı formatlar.
+    /// Controller tek interface görür, DI ile uygun parser seçilir.
+    /// </summary>
     public interface IBankStatementParser
     {
-        // Neden: Orchestrator dosya türünü otomatik seçer.
-        Task<PreviewBankStatementResponse> PreviewAsync(IFormFile file, CancellationToken ct);
-    }
+        StatementFileType FileType { get; }
 
-    public interface IExcelBankStatementParser
-    {
-        Task<PreviewBankStatementResponse> PreviewAsync(IFormFile file, CancellationToken ct);
-    }
-
-    public interface IPdfBankStatementParser
-    {
-        Task<PreviewBankStatementResponse> PreviewAsync(IFormFile file, CancellationToken ct);
+        Task<IReadOnlyList<PreviewBankStatementRow>> ParseAsync(
+            Stream fileStream,
+            CancellationToken ct);
     }
 }

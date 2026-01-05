@@ -41,9 +41,9 @@ builder.Services.AddSingleton<IImportFileStorage>(sp =>
 });
 
 // Neden: Parser pipeline (Excel/PDF + orchestrator)
-builder.Services.AddScoped<IExcelBankStatementParser, ExcelBankStatementParser>();
-builder.Services.AddScoped<IPdfBankStatementParser, PdfBankStatementParser>();
-builder.Services.AddScoped<IBankStatementParser, BankStatementParser>();
+builder.Services.AddScoped<IBankStatementParser, ExcelBankStatementParser>();
+builder.Services.AddSingleton<ITempFileStore, LocalTempFileStore>();
+
 
 var app = builder.Build();
 

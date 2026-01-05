@@ -1,182 +1,131 @@
 ﻿using Crm.Api.Import.Contracts;
 using ExcelDataReader;
 using System.Data;
+using System.Globalization;
 
 namespace Crm.Api.Import.Parsing
 {
-    public sealed class ExcelBankStatementParser : IExcelBankStatementParser
+    public sealed class ExcelBankStatementParser : IBankStatementParser
     {
-        public Task<PreviewBankStatementResponse> PreviewAsync(IFormFile file, CancellationToken ct)
+        public StatementFileType FileType => StatementFileType.Excel;
+
+        public async Task<IReadOnlyList<PreviewBankStatementRow>> ParseAsync(Stream fileStream, CancellationToken ct)
         {
-            using var stream = file.OpenReadStream();
-            using var reader = ExcelReaderFactory.CreateReader(stream);
-
-            var ds = reader.AsDataSet(new ExcelDataSetConfiguration
+            // ExcelDataReader sync çalışır; wrapper olarak Task.Run kullanıyoruz.
+            // Neden: Web request thread’ini bloklamamak.
+            return await Task.Run(() =>
             {
-                ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false }
-            });
+                System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-            if (ds.Tables.Count == 0)
-            {
-                return Task.FromResult(new PreviewBankStatementResponse
+                using var reader = ExcelReaderFactory.CreateReader(fileStream);
+                var rows = new List<PreviewBankStatementRow>();
+
+                var rowNo = 0;
+                while (reader.Read())
                 {
-                    DetectedFormat = "excel",
-                    Warnings = { "Excel içinde sheet bulunamadı." }
-                });
-            }
+                    ct.ThrowIfCancellationRequested();
 
-            var table = ds.Tables[0];
+                    rowNo++;
 
-            // Neden: Banka dosyalarında header satırı her zaman 1. satır olmaz.
-            var headerRow = FindHeaderRow(table, Math.Min(30, table.Rows.Count));
-            if (headerRow < 0)
-            {
-                return Task.FromResult(new PreviewBankStatementResponse
-                {
-                    DetectedFormat = "excel",
-                    Warnings = { "Header satırı tespit edilemedi (template/map gerekebilir)." }
-                });
-            }
+                    // MVP: ilk satır header ise atlayabilirsin (istersen Template ile yönet)
+                    // Burada basit örnek: tarih kolonunu parse edebiliyorsak satır kabul ediyoruz.
+                    var dateRaw = reader.GetValue(0)?.ToString();
+                    if (!TryParseDate(dateRaw, out var txDate))
+                        continue;
 
-            var header = GetRowStrings(table, headerRow);
-            var map = DetectColumnMap(header);
+                    var desc = reader.GetValue(1)?.ToString() ?? "";
+                    if (string.IsNullOrWhiteSpace(desc))
+                        desc = "(Açıklama yok)";
 
-            var warnings = new List<string>();
-            ValidateMap(map, warnings);
+                    var debitRaw = reader.GetValue(2)?.ToString();
+                    var creditRaw = reader.GetValue(3)?.ToString();
+                    var balanceRaw = reader.GetValue(4)?.ToString();
 
-            var rows = new List<BankStatementRowDto>();
-            var rowNo = 0;
+                    var debit = TryParseMoney(debitRaw);
+                    var credit = TryParseMoney(creditRaw);
+                    var balance = TryParseMoney(balanceRaw);
 
-            for (int r = headerRow + 1; r < table.Rows.Count; r++)
-            {
-                var cells = GetRowStrings(table, r);
-                if (cells.All(string.IsNullOrWhiteSpace)) continue;
+                    MoneyDirection dir;
+                    decimal amount;
 
-                if (!TryReadDate(cells, map.DateCol, out var date)) continue;
+                    if (credit > 0)
+                    {
+                        dir = MoneyDirection.Credit;
+                        amount = credit;
+                    }
+                    else
+                    {
+                        dir = MoneyDirection.Debit;
+                        amount = debit;
+                    }
 
-                var desc = ReadString(cells, map.DescCol);
-                var debit = ParseDecimalTr(ReadString(cells, map.DebitCol));
-                var credit = ParseDecimalTr(ReadString(cells, map.CreditCol));
-                var balance = ParseDecimalTr(ReadString(cells, map.BalanceCol));
+                    if (amount <= 0) continue;
 
-                rowNo++;
-                rows.Add(new BankStatementRowDto
-                {
-                    RowNo = rowNo,
-                    TransactionDate = date,
-                    Description = string.IsNullOrWhiteSpace(desc) ? "(Açıklama yok)" : desc,
-                    Debit = debit,
-                    Credit = credit,
-                    Balance = balance
-                });
-            }
+                    rows.Add(new PreviewBankStatementRow
+                    {
+                        RowNo = rowNo,
+                        TxDate = txDate,
+                        Description = desc.Trim(),
+                        Amount = amount,
+                        Direction = dir,
+                        BalanceAfter = balance
+                    });
+                }
 
-            return Task.FromResult(new PreviewBankStatementResponse
-            {
-                DetectedFormat = "excel",
-                Warnings = warnings.Distinct().Take(50).ToList(),
-                Rows = rows
-            });
+                return (IReadOnlyList<PreviewBankStatementRow>)rows;
+            }, ct);
         }
 
-        private static int FindHeaderRow(DataTable table, int maxScanRows)
-        {
-            for (int r = 0; r < maxScanRows; r++)
-            {
-                var cells = GetRowStrings(table, r);
-                var joined = string.Join(" ", cells).ToLowerInvariant();
-
-                // Neden: TR bankalarında genelde “Tarih” + “Açıklama” birlikte gelir.
-                if (joined.Contains("tarih") && (joined.Contains("açıklama") || joined.Contains("aciklama")))
-                    return r;
-
-                if (joined.Contains("işlem") && joined.Contains("tarih"))
-                    return r;
-            }
-            return -1;
-        }
-
-        private static string[] GetRowStrings(DataTable table, int rowIndex)
-        {
-            var row = table.Rows[rowIndex];
-            var arr = new string[table.Columns.Count];
-            for (int c = 0; c < table.Columns.Count; c++)
-                arr[c] = row[c]?.ToString()?.Trim() ?? "";
-            return arr;
-        }
-
-        private static string ReadString(string[] cells, int col)
-            => (col >= 0 && col < cells.Length) ? cells[col] : "";
-
-        private static bool TryReadDate(string[] cells, int col, out DateTime date)
+        private static bool TryParseDate(string? raw, out DateOnly date)
         {
             date = default;
-            var s = ReadString(cells, col);
-            if (DateTime.TryParse(s, out date)) return true;
-            if (DateTime.TryParseExact(s, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out date)) return true;
+
+            if (string.IsNullOrWhiteSpace(raw)) return false;
+
+            // Excel bazı durumlarda OADate döner.
+            if (double.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out var oa))
+            {
+                // OADate aralığına benziyorsa
+                if (oa > 30000 && oa < 60000)
+                {
+                    var dt = DateTime.FromOADate(oa);
+                    date = DateOnly.FromDateTime(dt);
+                    return true;
+                }
+            }
+
+            // TR formatlar
+            if (DateTime.TryParse(raw, new CultureInfo("tr-TR"), DateTimeStyles.None, out var d1))
+            {
+                date = DateOnly.FromDateTime(d1);
+                return true;
+            }
+
+            // ISO formatlar
+            if (DateTime.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d2))
+            {
+                date = DateOnly.FromDateTime(d2);
+                return true;
+            }
+
             return false;
         }
 
-        private static decimal ParseDecimalTr(string s)
+        private static decimal TryParseMoney(string? raw)
         {
-            if (string.IsNullOrWhiteSpace(s)) return 0m;
-            s = s.Trim();
+            if (string.IsNullOrWhiteSpace(raw)) return 0;
 
-            var negative = s.StartsWith("(") && s.EndsWith(")");
-            s = s.Trim('(', ')');
+            // "1.234,56" ve "1234.56" gibi formatları normalize et
+            raw = raw.Trim();
 
-            s = s.Replace("TL", "", StringComparison.OrdinalIgnoreCase).Replace("₺", "").Trim();
+            // TR -> invariant normalize
+            // 1.234,56 -> 1234.56
+            raw = raw.Replace(".", "").Replace(",", ".");
 
-            // TR: 1.234,56 -> 1234.56
-            var tr = s.Replace(".", "").Replace(",", ".");
-            if (decimal.TryParse(tr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var d))
-                return negative ? -d : d;
+            if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out var m))
+                return m;
 
-            // fallback
-            if (decimal.TryParse(s, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out d))
-                return negative ? -d : d;
-
-            return 0m;
-        }
-
-        private sealed class ColMap
-        {
-            public int DateCol { get; set; } = -1;
-            public int DescCol { get; set; } = -1;
-            public int DebitCol { get; set; } = -1;
-            public int CreditCol { get; set; } = -1;
-            public int BalanceCol { get; set; } = -1;
-        }
-
-        private static ColMap DetectColumnMap(string[] header)
-        {
-            int Find(params string[] keys)
-            {
-                for (int i = 0; i < header.Length; i++)
-                {
-                    var h = (header[i] ?? "").ToLowerInvariant();
-                    foreach (var k in keys)
-                        if (h.Contains(k)) return i;
-                }
-                return -1;
-            }
-
-            return new ColMap
-            {
-                DateCol = Find("tarih", "işlem tarih", "islem tarih"),
-                DescCol = Find("açıklama", "aciklama", "açiklama"),
-                DebitCol = Find("borç", "borc", "çıkış", "cikis"),
-                CreditCol = Find("alacak", "giriş", "giris"),
-                BalanceCol = Find("bakiye", "son bakiye", "kalan")
-            };
-        }
-
-        private static void ValidateMap(ColMap map, List<string> warnings)
-        {
-            if (map.DateCol < 0) warnings.Add("Tarih kolonu bulunamadı.");
-            if (map.DescCol < 0) warnings.Add("Açıklama kolonu bulunamadı.");
-            if (map.BalanceCol < 0) warnings.Add("Bakiye kolonu bulunamadı.");
-            if (map.DebitCol < 0 && map.CreditCol < 0) warnings.Add("Borç/Alacak kolonları bulunamadı (tek tutar kolonu olabilir).");
+            return 0;
         }
     }
 }

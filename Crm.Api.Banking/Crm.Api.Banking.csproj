@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Crm.Api.Shared\Crm.Api.Shared.csproj" />
     <ProjectReference Include="..\Crm.Business\Crm.Business.csproj" />
     <ProjectReference Include="..\Crm.Data\Crm.Data.csproj" />
     <ProjectReference Include="..\Crm.Entities\Crm.Entities.csproj" />

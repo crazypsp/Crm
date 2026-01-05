@@ -1,23 +1,26 @@
 using Crm.Data;
 using Microsoft.EntityFrameworkCore;
+// using Crm.Api.Shared.Platform;  // sende namespace neyse
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-// Neden: Bu API saf CRUD + query servisidir; controllers MVP için hýzlý ve yeterlidir.
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// 1) Ortak platform (Exception, Swagger policy, Validation, Health, CORS vs.)
+// builder.Services.AddCrmApiPlatform(builder.Configuration);
 
+// 2) Controllers
+builder.Services.AddControllers();
+
+// 3) DbContext (mevcut davranýþý koru)
 builder.Services.AddDbContext<CrmDbContext>(opt =>
 {
-    // Neden: BankTemplate/Rule/Import/Transaction verilerini okuyup yazacaðýz.
-    opt.UseSqlServer(builder.Configuration.GetConnectionString("CrmDb"));
+    opt.UseSqlServer(builder.Configuration.GetConnectionString("CrmDb"),
+        sql => sql.EnableRetryOnFailure()); // transient hatalarda dayanýklýlýk
 });
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// 4) Ortak middleware pipeline
+// app.UseCrmApiPlatform();
 
 app.MapControllers();
 app.Run();
