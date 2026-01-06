@@ -8,6 +8,9 @@ namespace Crm.Entities.Enums
         Micro = 3,
         LogoTiger = 4,
         LogoGo3 = 5,
-        Netsis = 6
+        Netsis = 6,
+        ZirveGenel = 7,
+        ZirveMaliMusavir = 8,
+        Netsim = 9
     }
 }

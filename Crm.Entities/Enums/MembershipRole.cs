@@ -7,6 +7,7 @@ namespace Crm.Entities.Enums
         Dealer = 2,
         Accountant = 3,
         AccountantStaff = 4,
-        CompanyUser = 5
+        CompanyUser = 5,
+        SubDealer = 6
     }
 }
