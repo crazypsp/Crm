@@ -1,5 +1,7 @@
-﻿using Crm.Data.Seeding;
+﻿using System.Linq.Expressions;
+using Crm.Data.Seeding;
 using Crm.Entities.Banking;
+using Crm.Entities.Common;
 using Crm.Entities.Documents;
 using Crm.Entities.Identity;
 using Crm.Entities.Integration;
@@ -66,30 +68,72 @@ public class CrmDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
         b.Entity<VoucherDraftLine>().Property(x => x.Credit).HasPrecision(18, 2);
 
         // =========================================================
-        // 2) Index/unique kuralları
+        // 2) Index/unique kuralları (performans + idempotency)
         // =========================================================
-        // Import içindeki satır numarası benzersiz (idempotency)
         b.Entity<BankTransaction>()
             .HasIndex(x => new { x.TenantId, x.ImportId, x.RowNo })
             .IsUnique();
 
-        // Banka hesap kodu şirkette benzersiz olsun
         b.Entity<BankAccount>()
             .HasIndex(x => new { x.TenantId, x.CompanyId, x.AccountingBankAccountCode })
             .IsUnique();
 
+        b.Entity<BankMappingRule>()
+            .HasIndex(x => new { x.TenantId, x.CompanyId, x.ProgramType, x.IsActive, x.Priority });
+
+        b.Entity<IntegrationProfile>()
+            .HasIndex(x => new { x.TenantId, x.CompanyId, x.ProgramType, x.IsActive });
+
         // =========================================================
-        // 3) İLİŞKİLER (kritik)
+        // 3) İLİŞKİLER (kritik: shadow FK ve cascade path hatalarını önler)
         // =========================================================
 
-        // 3.1 BankAccount -> Company (CompanyId1 shadow FK problemini çözer)
-        // Neden: Navigation üzerinden tek ilişkiyi netleştirir, EF'nin ikinci ilişki üretmesini engeller.
+        // 3.0 Dealer hiyerarşisi (Bayi → Alt bayi)
+        b.Entity<Dealer>(e =>
+        {
+            e.HasOne(x => x.ParentDealer)
+             .WithMany(x => x.SubDealers)
+             .HasForeignKey(x => x.ParentDealerId)
+             .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // 3.0.1 Tenant -> Dealer
+        b.Entity<Tenant>(e =>
+        {
+            e.HasOne(x => x.Dealer)
+             .WithMany(x => x.Tenants)
+             .HasForeignKey(x => x.DealerId)
+             .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // 3.0.2 Company -> Tenant (Company sınıfında Tenant navigation olmadığı için FK’yı netliyoruz)
+        b.Entity<Company>()
+            .HasOne<Tenant>()
+            .WithMany(t => t.Companies)
+            .HasForeignKey(c => c.TenantId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        // 3.1 BankAccount -> Company (CompanyId1 shadow FK problemini engeller)
         b.Entity<BankAccount>(e =>
         {
             e.HasOne(x => x.Company)
              .WithMany(c => c.BankAccounts)
              .HasForeignKey(x => x.CompanyId)
-             .OnDelete(DeleteBehavior.NoAction); // soft delete kullandığın için doğru
+             .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // 3.1.1 IntegrationProfile ilişkileri (Company + Secret)
+        b.Entity<IntegrationProfile>(e =>
+        {
+            e.HasOne(x => x.Company)
+             .WithMany(c => c.IntegrationProfiles)
+             .HasForeignKey(x => x.CompanyId)
+             .OnDelete(DeleteBehavior.NoAction);
+
+            e.HasOne(x => x.Secret)
+             .WithMany()
+             .HasForeignKey(x => x.SecretId)
+             .OnDelete(DeleteBehavior.NoAction);
         });
 
         // 3.2 BankStatementImport ilişkileri (multiple cascade path riskini kapatır)
@@ -116,8 +160,7 @@ public class CrmDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
              .OnDelete(DeleteBehavior.NoAction);
         });
 
-        // 3.3 BankTransaction -> Import
-        // Neden: Import silinirse transaction’lar cascade ile gitmesin; soft delete tercih.
+        // 3.3 BankTransaction -> Import (soft delete için NoAction)
         b.Entity<BankTransaction>(e =>
         {
             e.HasOne(x => x.Import)
@@ -143,15 +186,56 @@ public class CrmDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
              .HasForeignKey(x => x.VoucherDraftId)
              .OnDelete(DeleteBehavior.NoAction);
         });
+
+        // 3.6 VoucherDraftItem -> VoucherDraft + BankTransaction (izlenebilirlik)
+        b.Entity<VoucherDraftItem>(e =>
+        {
+            e.HasOne(x => x.VoucherDraft)
+             .WithMany(d => d.Items)
+             .HasForeignKey(x => x.VoucherDraftId)
+             .OnDelete(DeleteBehavior.NoAction);
+
+            e.HasOne(x => x.BankTransaction)
+             .WithMany()
+             .HasForeignKey(x => x.BankTransactionId)
+             .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // =========================================================
+        // 4) Global: Cascade delete kapat (SQL Server "multiple cascade path" engeli)
+        // =========================================================
         foreach (var fk in b.Model.GetEntityTypes().SelectMany(t => t.GetForeignKeys()))
         {
             if (fk.IsOwnership) continue;
             fk.DeleteBehavior = DeleteBehavior.NoAction;
         }
+
         // =========================================================
-        // 4) Demo seed
+        // 5) Soft delete query filter (IsDeleted=true olan kayıtlar otomatik gizlenir)
         // =========================================================
-        // Öneri: İlk migration'ı seed olmadan üret; sonra seed'i ekleyip ikinci migration üret.
+        ApplySoftDeleteQueryFilter(b);
+
+        // =========================================================
+        // 6) Demo seed (migration sırasında InsertData üretir)
+        // =========================================================
         DemoSeedData.Apply(b);
+    }
+
+    private static void ApplySoftDeleteQueryFilter(ModelBuilder b)
+    {
+        // Neden: UI/API katmanında her sorguda "IsDeleted = 0" yazmak zorunda kalmayalım.
+        // Dikkat: Admin ekranında "silinenleri göster" gibi senaryolarda IgnoreQueryFilters kullanılacak.
+        foreach (var entityType in b.Model.GetEntityTypes())
+        {
+            var clrType = entityType.ClrType;
+            if (!typeof(BaseEntity).IsAssignableFrom(clrType)) continue;
+
+            var parameter = Expression.Parameter(clrType, "e");
+            var prop = Expression.Property(parameter, nameof(BaseEntity.IsDeleted));
+            var body = Expression.Equal(prop, Expression.Constant(false));
+            var lambda = Expression.Lambda(body, parameter);
+
+            entityType.SetQueryFilter(lambda);
+        }
     }
 }

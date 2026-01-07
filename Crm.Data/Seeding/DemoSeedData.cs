@@ -1,8 +1,10 @@
-﻿using Crm.Entities.Banking;
+﻿using System.Text.Json;
+using Crm.Entities.Banking;
 using Crm.Entities.Documents;
 using Crm.Entities.Enums;
 using Crm.Entities.Identity;
 using Crm.Entities.Tenancy;
+using Crm.Entities.Work;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,514 +12,366 @@ namespace Crm.Data.Seeding;
 
 public static class DemoSeedData
 {
-    // Seed zamanı sabit olmalı (deterministik migration)
-    private static readonly DateTimeOffset SeedTime =
-        new DateTimeOffset(2025, 12, 29, 0, 0, 0, TimeSpan.Zero);
-
     public static void Apply(ModelBuilder b)
     {
-        SeedRoles(b);
-        SeedUsersAndUserRoles(b);
-        SeedOrganization(b);
-        SeedBankingAndImport(b);
-        SeedVoucherDraft(b);
-        SeedMemberships(b);
-    }
+        // Not: HasData ile seed -> migration üretilirken InsertData/UpdateData olarak yazılır.
+        // Bu yüzden burada "deterministik" alanları mümkün olduğunca sabit tutuyoruz.
+        var now = new DateTimeOffset(2026, 01, 01, 0, 0, 0, TimeSpan.Zero);
 
-    private static void SeedRoles(ModelBuilder b)
-    {
-        // Identity rollerini seed ediyoruz: UI yetkilendirmesi bunlarla çalışacak.
-        b.Entity<ApplicationRole>().HasData(
-            new ApplicationRole
-            {
-                Id = DemoSeedIds.RoleAdmin,
-                Name = "Admin",
-                NormalizedName = "ADMIN",
-                Description = "System administrator",
-                ConcurrencyStamp = "role-admin"
-            },
-            new ApplicationRole
-            {
-                Id = DemoSeedIds.RoleDealer,
-                Name = "Bayi",
-                NormalizedName = "BAYI",
-                Description = "Dealer",
-                ConcurrencyStamp = "role-dealer"
-            },
-            new ApplicationRole
-            {
-                Id = DemoSeedIds.RoleAccountant,
-                Name = "MaliMusavir",
-                NormalizedName = "MALIMUSAVIR",
-                Description = "Accountant office owner",
-                ConcurrencyStamp = "role-accountant"
-            },
-            new ApplicationRole
-            {
-                Id = DemoSeedIds.RoleStaff,
-                Name = "MaliMusavirPersoneli",
-                NormalizedName = "MALIMUSAVIRPERSONELI",
-                Description = "Accountant staff",
-                ConcurrencyStamp = "role-staff"
-            },
-            new ApplicationRole
-            {
-                Id = DemoSeedIds.RoleCompany,
-                Name = "Firma",
-                NormalizedName = "FIRMA",
-                Description = "Company user",
-                ConcurrencyStamp = "role-company"
-            }
-        );
-    }
+        // ==========================
+        // 1) Tenancy: Dealer/Tenant/Company
+        // ==========================
+        b.Entity<Dealer>().HasData(new Dealer
+        {
+            Id = DemoSeedIds.Dealer1,
+            TenantId = DemoSeedIds.Tenant1, // Dealer da TenantEntity ise; değilse bu satırı kaldır.
+            Name = "Demo Bayi",
+            CreatedAt = now,
+            IsDeleted = false
+        });
 
-    private static void SeedUsersAndUserRoles(ModelBuilder b)
-    {
-        // ÖNEMLİ: PasswordHash sabit olmalı.
-        // Aşağıdaki hash'i bir kere üretip buraya yapıştır:
-        // Password: Demo123*
-        const string DemoPasswordHash = "<PASTE_PASSWORD_HASH_HERE>";
-
-        b.Entity<ApplicationUser>().HasData(
-            new ApplicationUser
-            {
-                Id = DemoSeedIds.UserAdmin,
-                UserName = "admin@demo.local",
-                NormalizedUserName = "ADMIN@DEMO.LOCAL",
-                Email = "admin@demo.local",
-                NormalizedEmail = "ADMIN@DEMO.LOCAL",
-                EmailConfirmed = true,
-                FullName = "Demo Admin",
-                IsActive = true,
-                SecurityStamp = "sec-admin",
-                ConcurrencyStamp = "con-admin",
-                PasswordHash = DemoPasswordHash
-            },
-            new ApplicationUser
-            {
-                Id = DemoSeedIds.UserDealer,
-                UserName = "dealer@demo.local",
-                NormalizedUserName = "DEALER@DEMO.LOCAL",
-                Email = "dealer@demo.local",
-                NormalizedEmail = "DEALER@DEMO.LOCAL",
-                EmailConfirmed = true,
-                FullName = "Demo Bayi",
-                IsActive = true,
-                SecurityStamp = "sec-dealer",
-                ConcurrencyStamp = "con-dealer",
-                PasswordHash = DemoPasswordHash,
-                DealerId = DemoSeedIds.DealerDemo
-            },
-            new ApplicationUser
-            {
-                Id = DemoSeedIds.UserAccountant,
-                UserName = "accountant@demo.local",
-                NormalizedUserName = "ACCOUNTANT@DEMO.LOCAL",
-                Email = "accountant@demo.local",
-                NormalizedEmail = "ACCOUNTANT@DEMO.LOCAL",
-                EmailConfirmed = true,
-                FullName = "Demo Mali Müşavir",
-                IsActive = true,
-                SecurityStamp = "sec-acc",
-                ConcurrencyStamp = "con-acc",
-                PasswordHash = DemoPasswordHash,
-                DealerId = DemoSeedIds.DealerDemo,
-                TenantId = DemoSeedIds.TenantDemo
-            },
-            new ApplicationUser
-            {
-                Id = DemoSeedIds.UserStaff,
-                UserName = "staff@demo.local",
-                NormalizedUserName = "STAFF@DEMO.LOCAL",
-                Email = "staff@demo.local",
-                NormalizedEmail = "STAFF@DEMO.LOCAL",
-                EmailConfirmed = true,
-                FullName = "Demo Personel",
-                IsActive = true,
-                SecurityStamp = "sec-staff",
-                ConcurrencyStamp = "con-staff",
-                PasswordHash = DemoPasswordHash,
-                TenantId = DemoSeedIds.TenantDemo
-            },
-            new ApplicationUser
-            {
-                Id = DemoSeedIds.UserCompany,
-                UserName = "company@demo.local",
-                NormalizedUserName = "COMPANY@DEMO.LOCAL",
-                Email = "company@demo.local",
-                NormalizedEmail = "COMPANY@DEMO.LOCAL",
-                EmailConfirmed = true,
-                FullName = "Demo Firma Kullanıcısı",
-                IsActive = true,
-                SecurityStamp = "sec-company",
-                ConcurrencyStamp = "con-company",
-                PasswordHash = DemoPasswordHash,
-                TenantId = DemoSeedIds.TenantDemo,
-                CompanyId = DemoSeedIds.CompanyDemo
-            }
-        );
-
-        // AspNetUserRoles tablosuna seed
-        b.Entity<IdentityUserRole<Guid>>().HasData(
-            new IdentityUserRole<Guid> { UserId = DemoSeedIds.UserAdmin, RoleId = DemoSeedIds.RoleAdmin },
-            new IdentityUserRole<Guid> { UserId = DemoSeedIds.UserDealer, RoleId = DemoSeedIds.RoleDealer },
-            new IdentityUserRole<Guid> { UserId = DemoSeedIds.UserAccountant, RoleId = DemoSeedIds.RoleAccountant },
-            new IdentityUserRole<Guid> { UserId = DemoSeedIds.UserStaff, RoleId = DemoSeedIds.RoleStaff },
-            new IdentityUserRole<Guid> { UserId = DemoSeedIds.UserCompany, RoleId = DemoSeedIds.RoleCompany }
-        );
-    }
-
-    private static void SeedOrganization(ModelBuilder b)
-    {
-        // Bayi → Tenant → Company hiyerarşisini demo olarak kuruyoruz.
-        b.Entity<Dealer>().HasData(
-            new Dealer
-            {
-                Id = DemoSeedIds.DealerDemo,
-                Name = "Demo Bayi",
-                Email = "dealer@demo.local",
-                Phone = "0000",
-                TaxNo = "1111111111",
-                CreatedAt = SeedTime,
-                IsDeleted = false
-            }
-        );
-
-        b.Entity<Tenant>().HasData(
-            new Tenant
-            {
-                Id = DemoSeedIds.TenantDemo,
-                DealerId = DemoSeedIds.DealerDemo,
-                OfficeName = "Demo Mali Müşavir Ofisi",
-                TaxNo = "2222222222",
-                TaxOffice = "Demo Vergi Dairesi",
-                Address = "Demo Address",
-                IsActive = true,
-                CreatedAt = SeedTime,
-                IsDeleted = false
-            }
-        );
+        b.Entity<Tenant>().HasData(new Tenant
+        {
+            Id = DemoSeedIds.Tenant1,
+            DealerId = DemoSeedIds.Dealer1,
+            Title = "Demo Mali Müşavir Ofisi",
+            CreatedAt = now,
+            IsDeleted = false
+        });
 
         b.Entity<Company>().HasData(
             new Company
             {
-                Id = DemoSeedIds.CompanyDemo,
-                TenantId = DemoSeedIds.TenantDemo,
-                Title = "Demo Mükellef A.Ş.",
-                TaxNo = "3333333333",
-                TaxOffice = "Demo Vergi Dairesi",
-                Email = "company@demo.local",
-                Phone = "0000",
-                Address = "Demo Company Address",
+                Id = DemoSeedIds.Company1,
+                TenantId = DemoSeedIds.Tenant1,
+                Title = "Demo Firma A",
+                TaxOffice = "Kadıköy",
+                TaxNo = "1234567890",
+                Email = "firmaa@demo.local",
+                Phone = "05000000000",
+                Address = "İstanbul",
                 IsActive = true,
-                CreatedAt = SeedTime,
+                CreatedAt = now,
                 IsDeleted = false
-            }
-        );
-    }
-
-    private static void SeedBankingAndImport(ModelBuilder b)
-    {
-        // Banka hesabı ve şablon: Tanıtım.xlsx başlıklarına uygun.
-        b.Entity<BankAccount>().HasData(
-            new BankAccount
+            },
+            new Company
             {
-                Id = DemoSeedIds.BankAccountDemo,
-                TenantId = DemoSeedIds.TenantDemo,
-                CompanyId = DemoSeedIds.CompanyDemo,
-                BankName = "Demo Bank",
-                Iban = "TR000000000000000000000000",
-                Currency = "TRY",
-                AccountingBankAccountCode = "102.01.001",
-                AccountingBankAccountName = "Demo Banka Hesabı",
-                CreatedAt = SeedTime,
-                IsDeleted = false
-            }
-        );
-
-        var columnMapJson =
-            """
-            {
-              "date": "TARİH",
-              "valueDate": "VALÖR",
-              "ref": "REF NO",
-              "amount": "İŞLEM TUTARI",
-              "balance": "BAKİYE",
-              "desc": "AÇIKLAMA"
-            }
-            """;
-
-        b.Entity<BankTemplate>().HasData(
-            new BankTemplate
-            {
-                Id = DemoSeedIds.BankTemplateDemo,
-                TenantId = DemoSeedIds.TenantDemo,
-                Name = "Demo Ekstre Şablonu (Excel)",
-                BankName = "Demo Bank",
-                ColumnMapJson = columnMapJson,
-                CultureName = "tr-TR",
-                AmountNegativeMeansOutflow = true,
+                Id = DemoSeedIds.Company2,
+                TenantId = DemoSeedIds.Tenant1,
+                Title = "Demo Firma B",
+                TaxOffice = "Beşiktaş",
+                TaxNo = "9876543210",
+                Email = "firmab@demo.local",
+                Phone = "05000000001",
+                Address = "İstanbul",
                 IsActive = true,
-                CreatedAt = SeedTime,
+                CreatedAt = now,
                 IsDeleted = false
             }
         );
 
-        // Örnek mapping rule: açıklamada POS geçiyorsa gider hesabı öner (sadece çıkış)
-        b.Entity<BankMappingRule>().HasData(
-            new BankMappingRule
-            {
-                Id = DemoSeedIds.MappingRuleDemo,
-                TenantId = DemoSeedIds.TenantDemo,
-                Name = "POS Harcamaları",
-                MatchType = Entities.Enums.MatchType.Contains,
-                Pattern = "POS",
-                CounterAccountCode = "770.01.001",
-                CounterAccountName = "Genel Yönetim Giderleri",
-                OnlyOutflow = true,
-                Priority = 10,
-                IsActive = true,
-                CreatedAt = SeedTime,
-                IsDeleted = false
-            }
+        // ==========================
+        // 2) Identity: Role + User (basit demo)
+        // ==========================
+        b.Entity<ApplicationRole>().HasData(
+            new ApplicationRole { Id = DemoSeedIds.AdminRole, Name = "Admin", NormalizedName = "ADMIN" },
+            new ApplicationRole { Id = DemoSeedIds.DealerRole, Name = "Dealer", NormalizedName = "DEALER" },
+            new ApplicationRole { Id = DemoSeedIds.AccountantRole, Name = "Accountant", NormalizedName = "ACCOUNTANT" },
+            new ApplicationRole { Id = DemoSeedIds.StaffRole, Name = "Staff", NormalizedName = "STAFF" },
+            new ApplicationRole { Id = DemoSeedIds.CompanyRole, Name = "Company", NormalizedName = "COMPANY" }
         );
 
-        // Import'un kaynak dosyası (metadatası)
+        // Demo kullanıcı parolaları (dev): "P@ssw0rd!"
+        var hasher = new PasswordHasher<ApplicationUser>();
+
+        var admin = new ApplicationUser
+        {
+            Id = DemoSeedIds.AdminUser,
+            UserName = "admin@demo.local",
+            NormalizedUserName = "ADMIN@DEMO.LOCAL",
+            Email = "admin@demo.local",
+            NormalizedEmail = "ADMIN@DEMO.LOCAL",
+            EmailConfirmed = true,
+            SecurityStamp = Guid.NewGuid().ToString("N"),
+            CreatedAt = now,
+            IsDeleted = false
+        };
+        admin.PasswordHash = hasher.HashPassword(admin, "P@ssw0rd!");
+
+        b.Entity<ApplicationUser>().HasData(admin);
+
+        // Diğer demo user’ları eklemek istersen aynı mantıkla ekleyebilirsin.
+        // (Rol eşlemesi için IdentityUserRole<Guid> HasData da yapılabilir.)
+
+        // ==========================
+        // 3) Documents: 2 adet demo dosya
+        // ==========================
         b.Entity<DocumentFile>().HasData(
             new DocumentFile
             {
-                Id = DemoSeedIds.FileBankStatementDemo,
-                TenantId = DemoSeedIds.TenantDemo,
-                FileName = "demo-bank-statement.xlsx",
-                ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                SizeBytes = 12345,
+                Id = DemoSeedIds.DocumentFile1,
+                TenantId = DemoSeedIds.Tenant1,
+                FileName = "demo-belge.pdf",
+                ContentType = "application/pdf",
+                SizeBytes = 1024,
                 StorageProvider = "local",
-                StoragePath = "seed/demo-bank-statement.xlsx",
-                Sha256 = null,
-                CreatedAt = SeedTime,
+                StoragePath = $"tenant-{DemoSeedIds.Tenant1}/company-{DemoSeedIds.Company1}/2026/01/demo-belge.pdf",
+                CreatedAt = now,
                 IsDeleted = false
-            }
-        );
-
-        // Import oturumu
-        b.Entity<BankStatementImport>().HasData(
-            new BankStatementImport
+            },
+            new DocumentFile
             {
-                Id = DemoSeedIds.BankImportDemo,
-                TenantId = DemoSeedIds.TenantDemo,
-                CompanyId = DemoSeedIds.CompanyDemo,
-                BankAccountId = DemoSeedIds.BankAccountDemo,
-                TemplateId = DemoSeedIds.BankTemplateDemo,
-                SourceFileId = DemoSeedIds.FileBankStatementDemo,
-                Status = BankImportStatus.Mapped,
-                TotalRows = 3,
-                ImportedRows = 3,
-                Notes = "Demo import",
-                CreatedAt = SeedTime,
+                Id = DemoSeedIds.DocumentFile2,
+                TenantId = DemoSeedIds.Tenant1,
+                FileName = "demo-ekstre.xlsx",
+                ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                SizeBytes = 2048,
+                StorageProvider = "local",
+                StoragePath = $"tenant-{DemoSeedIds.Tenant1}/company-{DemoSeedIds.Company1}/2026/01/demo-ekstre.xlsx",
+                CreatedAt = now,
                 IsDeleted = false
             }
         );
 
-        // Import satırları (3 satır demo)
+        // ==========================
+        // 4) Banking: BankAccount + Template
+        // ==========================
+        b.Entity<BankAccount>().HasData(new BankAccount
+        {
+            Id = DemoSeedIds.BankAccount1,
+            TenantId = DemoSeedIds.Tenant1,
+            CompanyId = DemoSeedIds.Company1,
+            BankName = "Demo Bank",
+            Iban = "TR000000000000000000000001",
+            Currency = "TRY",
+            AccountingBankAccountCode = "102.01.001",
+            AccountingBankAccountName = "Demo Bank TL",
+            CreatedAt = now,
+            IsDeleted = false
+        });
+
+        var columnMap = new
+        {
+            date = "İşlem Tarihi",
+            desc = "Açıklama",
+            amount = "Tutar",
+            balance = "Bakiye"
+        };
+
+        b.Entity<BankTemplate>().HasData(new BankTemplate
+        {
+            Id = DemoSeedIds.BankTemplate1,
+            TenantId = DemoSeedIds.Tenant1,
+            Name = "Demo Ekstre Şablonu",
+            BankName = "Demo Bank",
+            ColumnMapJson = JsonSerializer.Serialize(columnMap),
+            CultureName = "tr-TR",
+            AmountNegativeMeansOutflow = true,
+            IsActive = true,
+            CreatedAt = now,
+            IsDeleted = false
+        });
+
+        // ==========================
+        // 5) Banking: Mapping Rules (açıklamadan karşı hesap önerisi)
+        // ==========================
+        b.Entity<BankMappingRule>().HasData(
+            new BankMappingRule
+            {
+                Id = DemoSeedIds.BankRule1,
+                TenantId = DemoSeedIds.Tenant1,
+                Name = "SGK Ödemesi",
+                MatchType = MatchType.Contains,
+                Pattern = "SGK",
+                ProgramType = null,
+                CompanyId = DemoSeedIds.Company1,
+                CounterAccountCode = "361.01.001",
+                CounterAccountName = "SGK Prim Borçları",
+                OnlyOutflow = true,
+                Priority = 10,
+                IsActive = true,
+                CreatedAt = now,
+                IsDeleted = false
+            },
+            new BankMappingRule
+            {
+                Id = DemoSeedIds.BankRule2,
+                TenantId = DemoSeedIds.Tenant1,
+                Name = "Kira",
+                MatchType = MatchType.Contains,
+                Pattern = "KİRA",
+                ProgramType = null,
+                CompanyId = DemoSeedIds.Company1,
+                CounterAccountCode = "770.01.001",
+                CounterAccountName = "Kira Giderleri",
+                OnlyOutflow = true,
+                Priority = 20,
+                IsActive = true,
+                CreatedAt = now,
+                IsDeleted = false
+            }
+        );
+
+        // ==========================
+        // 6) Import demo: BankStatementImport + 3 satır transaction
+        // ==========================
+        b.Entity<BankStatementImport>().HasData(new BankStatementImport
+        {
+            Id = DemoSeedIds.BankStatementImport1,
+            TenantId = DemoSeedIds.Tenant1,
+            CompanyId = DemoSeedIds.Company1,
+            BankAccountId = DemoSeedIds.BankAccount1,
+            TemplateId = DemoSeedIds.BankTemplate1,
+            SourceFileId = DemoSeedIds.DocumentFile2,
+            Status = BankImportStatus.Extracted,
+            TotalRows = 3,
+            ImportedRows = 3,
+            Notes = "Demo import (seed)",
+            CreatedAt = now,
+            IsDeleted = false
+        });
+
         b.Entity<BankTransaction>().HasData(
             new BankTransaction
             {
-                Id = DemoSeedIds.Tx1,
-                TenantId = DemoSeedIds.TenantDemo,
-                ImportId = DemoSeedIds.BankImportDemo,
-                TransactionDate = new DateTime(2025, 12, 25),
-                ValueDate = new DateTime(2025, 12, 25),
+                Id = DemoSeedIds.BankTx1,
+                TenantId = DemoSeedIds.Tenant1,
+                ImportId = DemoSeedIds.BankStatementImport1,
+                TransactionDate = new DateTime(2026, 01, 02),
+                ValueDate = new DateTime(2026, 01, 02),
                 ReferenceNo = "REF001",
-                Description = "POS HARCAMA MARKET",
-                Amount = -600000.00m,
-                BalanceAfter = 1400000.00m,
-                RowNo = 2,
-                MappingStatus = MappingStatus.Approved,
-                SuggestedCounterAccountCode = "770.01.001",
-                ApprovedCounterAccountCode = "770.01.001",
-                AppliedRuleId = DemoSeedIds.MappingRuleDemo,
-                Confidence = 0.95m,
-                CreatedAt = SeedTime,
+                Description = "SGK PRİM ÖDEMESİ",
+                Amount = -15000m,
+                BalanceAfter = 250000m,
+                RowNo = 1,
+                MappingStatus = MappingStatus.Suggested,
+                SuggestedCounterAccountCode = "361.01.001",
+                ApprovedCounterAccountCode = null,
+                AppliedRuleId = DemoSeedIds.BankRule1,
+                Confidence = 0.90m,
+                CreatedAt = now,
                 IsDeleted = false
             },
             new BankTransaction
             {
-                Id = DemoSeedIds.Tx2,
-                TenantId = DemoSeedIds.TenantDemo,
-                ImportId = DemoSeedIds.BankImportDemo,
-                TransactionDate = new DateTime(2025, 12, 26),
-                ValueDate = new DateTime(2025, 12, 26),
+                Id = DemoSeedIds.BankTx2,
+                TenantId = DemoSeedIds.Tenant1,
+                ImportId = DemoSeedIds.BankStatementImport1,
+                TransactionDate = new DateTime(2026, 01, 03),
+                ValueDate = new DateTime(2026, 01, 03),
                 ReferenceNo = "REF002",
-                Description = "HAVALE GELİŞİ",
-                Amount = 250000.00m,
-                BalanceAfter = 1650000.00m,
+                Description = "OCAK KİRA ÖDEMESİ",
+                Amount = -35000m,
+                BalanceAfter = 215000m,
+                RowNo = 2,
+                MappingStatus = MappingStatus.Suggested,
+                SuggestedCounterAccountCode = "770.01.001",
+                ApprovedCounterAccountCode = null,
+                AppliedRuleId = DemoSeedIds.BankRule2,
+                Confidence = 0.85m,
+                CreatedAt = now,
+                IsDeleted = false
+            },
+            new BankTransaction
+            {
+                Id = DemoSeedIds.BankTx3,
+                TenantId = DemoSeedIds.Tenant1,
+                ImportId = DemoSeedIds.BankStatementImport1,
+                TransactionDate = new DateTime(2026, 01, 04),
+                ValueDate = new DateTime(2026, 01, 04),
+                ReferenceNo = "REF003",
+                Description = "MÜŞTERİ TAHSİLATI",
+                Amount = 50000m,
+                BalanceAfter = 265000m,
                 RowNo = 3,
                 MappingStatus = MappingStatus.Unmapped,
                 SuggestedCounterAccountCode = null,
                 ApprovedCounterAccountCode = null,
                 AppliedRuleId = null,
                 Confidence = null,
-                CreatedAt = SeedTime,
-                IsDeleted = false
-            },
-            new BankTransaction
-            {
-                Id = DemoSeedIds.Tx3,
-                TenantId = DemoSeedIds.TenantDemo,
-                ImportId = DemoSeedIds.BankImportDemo,
-                TransactionDate = new DateTime(2025, 12, 27),
-                ValueDate = new DateTime(2025, 12, 27),
-                ReferenceNo = "REF003",
-                Description = "POS HARCAMA AKARYAKIT",
-                Amount = -50000.00m,
-                BalanceAfter = 1600000.00m,
-                RowNo = 4,
-                MappingStatus = MappingStatus.Suggested,
-                SuggestedCounterAccountCode = "770.01.001",
-                ApprovedCounterAccountCode = null,
-                AppliedRuleId = DemoSeedIds.MappingRuleDemo,
-                Confidence = 0.80m,
-                CreatedAt = SeedTime,
-                IsDeleted = false
-            }
-        );
-    }
-
-    private static void SeedVoucherDraft(ModelBuilder b)
-    {
-        // Demo olarak fiş taslağı da seed ediyoruz:
-        // Böylece UI "Draft" ekranlarını ilk çalıştırmada test edebilirsin.
-        b.Entity<VoucherDraft>().HasData(
-            new VoucherDraft
-            {
-                Id = DemoSeedIds.VoucherDraftDemo,
-                TenantId = DemoSeedIds.TenantDemo,
-                CompanyId = DemoSeedIds.CompanyDemo,
-                ImportId = DemoSeedIds.BankImportDemo,
-                VoucherDate = new DateTime(2025, 12, 25),
-                Description = "Demo Banka Fişi",
-                BankAccountCode = "102.01.001",
-                Status = VoucherDraftStatus.Draft,
-                CreatedAt = SeedTime,
+                CreatedAt = now,
                 IsDeleted = false
             }
         );
 
-        // Tx1 (600.000 çıkış) için muhasebe mantığı:
-        // Banka (102) ALACAK, Gider (770) BORÇ
+        // ==========================
+        // 7) Demo VoucherDraft (tek fiş taslağı örneği)
+        // ==========================
+        b.Entity<VoucherDraft>().HasData(new VoucherDraft
+        {
+            Id = DemoSeedIds.VoucherDraft1,
+            TenantId = DemoSeedIds.Tenant1,
+            CompanyId = DemoSeedIds.Company1,
+            ImportId = DemoSeedIds.BankStatementImport1,
+            VoucherDate = new DateTime(2026, 01, 02),
+            Description = "Demo fiş taslağı (seed)",
+            BankAccountCode = "102.01.001",
+            Status = VoucherDraftStatus.Draft,
+            CreatedAt = now,
+            IsDeleted = false
+        });
+
         b.Entity<VoucherDraftLine>().HasData(
             new VoucherDraftLine
             {
-                Id = DemoSeedIds.VLine1,
-                TenantId = DemoSeedIds.TenantDemo,
-                VoucherDraftId = DemoSeedIds.VoucherDraftDemo,
+                Id = DemoSeedIds.VoucherLine1,
+                TenantId = DemoSeedIds.Tenant1,
+                VoucherDraftId = DemoSeedIds.VoucherDraft1,
                 LineNo = 1,
-                AccountCode = "770.01.001",
-                AccountName = "Genel Yönetim Giderleri",
-                Debit = 600000.00m,
+                AccountCode = "361.01.001",
+                AccountName = "SGK Prim Borçları",
+                Debit = 15000m,
                 Credit = 0m,
-                LineDescription = "POS HARCAMA MARKET",
-                CostCenterCode = null,
-                CreatedAt = SeedTime,
+                LineDescription = "SGK PRİM ÖDEMESİ",
+                CreatedAt = now,
                 IsDeleted = false
             },
             new VoucherDraftLine
             {
-                Id = DemoSeedIds.VLine2,
-                TenantId = DemoSeedIds.TenantDemo,
-                VoucherDraftId = DemoSeedIds.VoucherDraftDemo,
+                Id = DemoSeedIds.VoucherLine2,
+                TenantId = DemoSeedIds.Tenant1,
+                VoucherDraftId = DemoSeedIds.VoucherDraft1,
                 LineNo = 2,
                 AccountCode = "102.01.001",
-                AccountName = "Demo Banka Hesabı",
+                AccountName = "Demo Bank TL",
                 Debit = 0m,
-                Credit = 600000.00m,
-                LineDescription = "POS HARCAMA MARKET",
-                CostCenterCode = null,
-                CreatedAt = SeedTime,
+                Credit = 15000m,
+                LineDescription = "SGK PRİM ÖDEMESİ",
+                CreatedAt = now,
                 IsDeleted = false
             }
         );
 
-        // İzlenebilirlik: Tx1 hangi satırları üretti?
-        b.Entity<VoucherDraftItem>().HasData(
-            new VoucherDraftItem
-            {
-                Id = DemoSeedIds.VItem1,
-                TenantId = DemoSeedIds.TenantDemo,
-                VoucherDraftId = DemoSeedIds.VoucherDraftDemo,
-                BankTransactionId = DemoSeedIds.Tx1,
-                FirstLineNo = 1,
-                LastLineNo = 2,
-                CreatedAt = SeedTime,
-                IsDeleted = false
-            }
-        );
-    }
+        b.Entity<VoucherDraftItem>().HasData(new VoucherDraftItem
+        {
+            Id = DemoSeedIds.VoucherItem1,
+            TenantId = DemoSeedIds.Tenant1,
+            VoucherDraftId = DemoSeedIds.VoucherDraft1,
+            BankTransactionId = DemoSeedIds.BankTx1,
+            FirstLineNo = 1,
+            LastLineNo = 2,
+            CreatedAt = now,
+            IsDeleted = false
+        });
 
-    private static void SeedMemberships(ModelBuilder b)
-    {
-        // Identity role yetkilendirmesine ek olarak “scope/tenant” kontrolü için Membership seed ediyoruz.
-        b.Entity<UserMembership>().HasData(
-            new UserMembership
-            {
-                Id = DemoSeedIds.MAdmin,
-                UserId = DemoSeedIds.UserAdmin,
-                Role = MembershipRole.Admin,
-                DealerId = null,
-                TenantId = null,
-                CompanyId = null,
-                IsPrimary = true,
-                CreatedAt = SeedTime,
-                IsDeleted = false
-            },
-            new UserMembership
-            {
-                Id = DemoSeedIds.MDealer,
-                UserId = DemoSeedIds.UserDealer,
-                Role = MembershipRole.Dealer,
-                DealerId = DemoSeedIds.DealerDemo,
-                TenantId = null,
-                CompanyId = null,
-                IsPrimary = true,
-                CreatedAt = SeedTime,
-                IsDeleted = false
-            },
-            new UserMembership
-            {
-                Id = DemoSeedIds.MAccountant,
-                UserId = DemoSeedIds.UserAccountant,
-                Role = MembershipRole.Accountant,
-                DealerId = DemoSeedIds.DealerDemo,
-                TenantId = DemoSeedIds.TenantDemo,
-                CompanyId = null,
-                IsPrimary = true,
-                CreatedAt = SeedTime,
-                IsDeleted = false
-            },
-            new UserMembership
-            {
-                Id = DemoSeedIds.MStaff,
-                UserId = DemoSeedIds.UserStaff,
-                Role = MembershipRole.AccountantStaff,
-                DealerId = null,
-                TenantId = DemoSeedIds.TenantDemo,
-                CompanyId = null,
-                IsPrimary = true,
-                CreatedAt = SeedTime,
-                IsDeleted = false
-            },
-            new UserMembership
-            {
-                Id = DemoSeedIds.MCompanyUser,
-                UserId = DemoSeedIds.UserCompany,
-                Role = MembershipRole.CompanyUser,
-                DealerId = null,
-                TenantId = DemoSeedIds.TenantDemo,
-                CompanyId = DemoSeedIds.CompanyDemo,
-                IsPrimary = true,
-                CreatedAt = SeedTime,
-                IsDeleted = false
-            }
-        );
+        // ==========================
+        // 8) Work demo
+        // ==========================
+        b.Entity<WorkTask>().HasData(new WorkTask
+        {
+            Id = DemoSeedIds.Task1,
+            TenantId = DemoSeedIds.Tenant1,
+            CompanyId = DemoSeedIds.Company1,
+            Title = "Demo görev: Ocak KDV kontrolü",
+            Description = "Demo seed görev açıklaması",
+            Status = WorkTaskStatus.Open,
+            Priority = WorkTaskPriority.Normal,
+            DueDate = new DateTime(2026, 01, 31),
+            CreatedAt = now,
+            IsDeleted = false
+        });
+
+        // Messaging seed (minimum)
+        // Not: MessageThread/Participant/Message seedlerini önceki dosyan varsa aynı şekilde koruyabilirsin.
     }
 }
