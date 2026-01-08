@@ -14,6 +14,7 @@ public static class DemoSeedData
 {
     public static void Apply(ModelBuilder b)
     {
+
         // Not: HasData ile seed -> migration üretilirken InsertData/UpdateData olarak yazılır.
         // Bu yüzden burada "deterministik" alanları mümkün olduğunca sabit tutuyoruz.
         var now = new DateTimeOffset(2026, 01, 01, 0, 0, 0, TimeSpan.Zero);
