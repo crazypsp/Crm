@@ -1,5 +1,4 @@
-﻿
-namespace Crm.Services.Storage
+﻿namespace Crm.Services.Storage
 {
     public sealed class FileStorageOptions
     {

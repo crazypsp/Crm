@@ -1,5 +1,6 @@
 ﻿using Crm.Business.Integration;
 using Crm.Data;
+using Crm.Entities.Integration;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,14 +17,19 @@ namespace Crm.Services.Integration
             _jobManager = jobManager;
         }
 
-        public async Task<Guid> EnqueuePostVoucherAsync(Guid tenantId, Guid companyId, Guid integrationProfileId, Guid voucherDraftId, CancellationToken ct)
+        public async Task<Guid> EnqueuePostVoucherAsync(
+            Guid tenantId,
+            Guid companyId,
+            Guid integrationProfileId,
+            Guid voucherDraftId,
+            CancellationToken ct)
         {
-            // Draft’ı DB’den al, Agent’a gidecek payload’ı oluştur
             var draft = await _db.VoucherDrafts
                 .Include(x => x.Lines)
                 .FirstOrDefaultAsync(x => x.Id == voucherDraftId && x.TenantId == tenantId, ct);
 
-            if (draft is null) throw new Exception("Voucher draft bulunamadı.");
+            if (draft is null)
+                throw new Exception("Voucher draft bulunamadı.");
 
             var payload = new
             {
@@ -49,12 +55,12 @@ namespace Crm.Services.Integration
             var json = JsonSerializer.Serialize(payload);
 
             var job = await _jobManager.EnqueueJobAsync(
-                tenantId,
-                companyId,
+                tenantId: tenantId,
+                companyId: companyId,
                 agentMachineId: null,
                 commandType: "PostVoucher",
                 payloadJson: json,
-                ct);
+                ct: ct);
 
             return job.Id;
         }

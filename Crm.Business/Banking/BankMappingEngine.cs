@@ -1,39 +1,56 @@
 ﻿using Crm.Entities.Banking;
 using Crm.Entities.Enums;
 using System.Text.RegularExpressions;
+using EntitiesMatchType = Crm.Entities.Enums.MatchType; // Alias tanımlama
 
 namespace Crm.Business.Banking
 {
     public sealed class BankMappingEngine : IBankMappingEngine
     {
-        public void ApplyRules(IReadOnlyList<BankMappingRule> rules, IReadOnlyList<BankTransaction> txs)
+        public void ApplyRules(
+            IReadOnlyList<BankMappingRule> rules,
+            IReadOnlyList<BankTransaction> transactions)
         {
-            foreach (var tx in txs)
+            foreach (var transaction in transactions)
             {
-                if (tx.MappingStatus == MappingStatus.Approved) continue;
+                if (transaction.MappingStatus == MappingStatus.Approved)
+                    continue;
 
                 foreach (var rule in rules)
                 {
-                    if (!rule.IsActive) continue;
+                    if (!rule.IsActive)
+                        continue;
 
-                    if (rule.OnlyOutflow is true && tx.Amount >= 0) continue;
-                    if (rule.OnlyOutflow is false && tx.Amount <= 0) continue;
+                    if (rule.OnlyOutflow is true && transaction.Amount >= 0)
+                        continue;
+                    if (rule.OnlyOutflow is false && transaction.Amount <= 0)
+                        continue;
 
-                    var ok = rule.MatchType switch
+                    var isMatch = rule.MatchType switch
                     {
-                        Entities.Enums.MatchType.Contains => tx.Description.Contains(rule.Pattern, StringComparison.OrdinalIgnoreCase),
-                        Entities.Enums.MatchType.StartsWith => tx.Description.StartsWith(rule.Pattern, StringComparison.OrdinalIgnoreCase),
-                        Entities.Enums.MatchType.Equals => string.Equals(tx.Description.Trim(), rule.Pattern.Trim(), StringComparison.OrdinalIgnoreCase),
-                        Entities.Enums.MatchType.Regex => Regex.IsMatch(tx.Description, rule.Pattern, RegexOptions.IgnoreCase),
+                        // Alias kullanarak
+                        EntitiesMatchType.Contains => transaction.Description.Contains(
+                            rule.Pattern, StringComparison.OrdinalIgnoreCase),
+                        EntitiesMatchType.StartsWith => transaction.Description.StartsWith(
+                            rule.Pattern, StringComparison.OrdinalIgnoreCase),
+                        EntitiesMatchType.Equals => string.Equals(
+                            transaction.Description.Trim(),
+                            rule.Pattern.Trim(),
+                            StringComparison.OrdinalIgnoreCase),
+                        EntitiesMatchType.Regex => Regex.IsMatch(
+                            transaction.Description,
+                            rule.Pattern,
+                            RegexOptions.IgnoreCase),
                         _ => false
                     };
 
-                    if (!ok) continue;
+                    if (!isMatch)
+                        continue;
 
-                    tx.SuggestedCounterAccountCode = rule.CounterAccountCode;
-                    tx.AppliedRuleId = rule.Id;
-                    tx.MappingStatus = MappingStatus.Suggested;
-                    tx.Confidence = 0.80m; // MVP sabit; sonra dinamikleştirilebilir
+                    transaction.SuggestedCounterAccountCode = rule.CounterAccountCode;
+                    transaction.AppliedRuleId = rule.Id;
+                    transaction.MappingStatus = MappingStatus.Suggested;
+                    transaction.Confidence = 0.80m;
                     break;
                 }
             }

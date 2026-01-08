@@ -1,4 +1,5 @@
-﻿
+﻿using Crm.Entities.Banking;
+
 namespace Crm.Services.Banking
 {
     public interface IBankImportAppService

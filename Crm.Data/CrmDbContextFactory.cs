@@ -9,11 +9,15 @@ public sealed class CrmDbContextFactory : IDesignTimeDbContextFactory<CrmDbConte
     {
         var options = new DbContextOptionsBuilder<CrmDbContext>();
 
-        var cs =
-            Environment.GetEnvironmentVariable("CRM_CONNECTION_STRING")
-            ?? "Server=DESKTOP-54QF28R\\ZRV2014EXP;Database=CrmSuiteDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True";
+        var cs = Environment.GetEnvironmentVariable("CRM_CONNECTION_STRING")
+                ?? "Server=DESKTOP-54QF28R\\ZRV2014EXP;Database=CrmSuiteDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True";
 
-        options.UseSqlServer(cs);
+        options.UseSqlServer(cs, sqlOptions =>
+        {
+            sqlOptions.MigrationsAssembly("Crm.Data");
+            sqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+        });
+
         return new CrmDbContext(options.Options);
     }
 }

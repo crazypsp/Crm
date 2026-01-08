@@ -4,6 +4,7 @@ using Crm.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Crm.Data.Migrations
 {
     [DbContext(typeof(CrmDbContext))]
-    partial class CrmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260108200635_Add_Tax_Entities")]
+    partial class Add_Tax_Entities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1408,42 +1411,36 @@ namespace Crm.Data.Migrations
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444441"),
-                            ConcurrencyStamp = "admin-concurrency-stamp",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444442"),
-                            ConcurrencyStamp = "dealer-concurrency-stamp",
                             Name = "Dealer",
                             NormalizedName = "DEALER"
                         },
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444446"),
-                            ConcurrencyStamp = "subdealer-concurrency-stamp",
                             Name = "SubDealer",
                             NormalizedName = "SUBDEALER"
                         },
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444443"),
-                            ConcurrencyStamp = "accountant-concurrency-stamp",
                             Name = "Accountant",
                             NormalizedName = "ACCOUNTANT"
                         },
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444444"),
-                            ConcurrencyStamp = "staff-concurrency-stamp",
                             Name = "Staff",
                             NormalizedName = "STAFF"
                         },
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444445"),
-                            ConcurrencyStamp = "company-concurrency-stamp",
                             Name = "Company",
                             NormalizedName = "COMPANY"
                         });
@@ -1541,7 +1538,7 @@ namespace Crm.Data.Migrations
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555551"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "admin-user-concurrency-stamp",
+                            ConcurrencyStamp = "b631009f-cd58-4a88-a6d6-07fe6600763a",
                             DealerId = new Guid("11111111-1111-1111-1111-111111111111"),
                             Email = "admin@demo.local",
                             EmailConfirmed = true,
@@ -1550,9 +1547,9 @@ namespace Crm.Data.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@DEMO.LOCAL",
                             NormalizedUserName = "ADMIN@DEMO.LOCAL",
-                            PasswordHash = "AQAAAAEAACcQAAAAEHRDILxLq7nLd5AL3KJQcHlL4jNQ2hTp9hK5mR8vJ1kKjHqYtZwXvB2nMjPpLk3Gzg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAED0FsEBEMnfxvBxEdBR0lygSeKBQ32rwlI5h7j7JVXSHc2rSht3FUOf+my83bmYkCg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "11111111-1111-1111-1111-111111111111",
+                            SecurityStamp = "dbbebd80743f42d3a6c052efc062da47",
                             TenantId = new Guid("22222222-2222-2222-2222-222222222222"),
                             TwoFactorEnabled = false,
                             UserName = "admin@demo.local"
@@ -1561,7 +1558,7 @@ namespace Crm.Data.Migrations
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555553"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "accountant-user-concurrency-stamp",
+                            ConcurrencyStamp = "25f324db-b3b2-4ce7-b4c1-ef2dbae5c336",
                             Email = "musavir@demo.local",
                             EmailConfirmed = true,
                             FullName = "Demo Mali Müşavir",
@@ -1569,9 +1566,9 @@ namespace Crm.Data.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "MUSAVIR@DEMO.LOCAL",
                             NormalizedUserName = "MUSAVIR@DEMO.LOCAL",
-                            PasswordHash = "AQAAAAEAACcQAAAAEHRDILxLq7nLd5AL3KJQcHlL4jNQ2hTp9hK5mR8vJ1kKjHqYtZwXvB2nMjPpLk3Gzg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEAsWQuq2jQW+H2jo7b1mWSXJwXYRclsh0xWIVUdFPKXG7xNUiPYpGAr/0nDaoiJE7A==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "22222222-2222-2222-2222-222222222222",
+                            SecurityStamp = "3cef3189f8464dbab39e15d129bd990b",
                             TenantId = new Guid("22222222-2222-2222-2222-222222222222"),
                             TwoFactorEnabled = false,
                             UserName = "musavir@demo.local"
@@ -1581,7 +1578,7 @@ namespace Crm.Data.Migrations
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
                             AccessFailedCount = 0,
                             CompanyId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            ConcurrencyStamp = "company-user-concurrency-stamp",
+                            ConcurrencyStamp = "abe23c33-eadc-4090-b0b8-bce7974f4487",
                             Email = "firma@demo.local",
                             EmailConfirmed = true,
                             FullName = "Firma Yetkilisi",
@@ -1589,9 +1586,9 @@ namespace Crm.Data.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "FIRMA@DEMO.LOCAL",
                             NormalizedUserName = "FIRMA@DEMO.LOCAL",
-                            PasswordHash = "AQAAAAEAACcQAAAAEHRDILxLq7nLd5AL3KJQcHlL4jNQ2hTp9hK5mR8vJ1kKjHqYtZwXvB2nMjPpLk3Gzg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEPzOD9N9oDPtHlFMGfOKfQNd4pDL90IpiuwsTSj233ZQNDxQ51Zoww+nOOvZDudJgg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "33333333-3333-3333-3333-333333333333",
+                            SecurityStamp = "49c1114f0bdb40249326315d0ee6c198",
                             TwoFactorEnabled = false,
                             UserName = "firma@demo.local"
                         });
@@ -2583,7 +2580,7 @@ namespace Crm.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"),
+                            Id = new Guid("92beec81-d246-4e3c-afde-896f5cddc767"),
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DealerId = new Guid("11111111-1111-1111-1111-111111111111"),
                             IsDeleted = false,
@@ -2593,7 +2590,7 @@ namespace Crm.Data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"),
+                            Id = new Guid("0cd0d13b-79a9-47b6-aebb-6cdd159396e6"),
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             IsDeleted = false,
                             IsPrimary = true,
@@ -2603,7 +2600,7 @@ namespace Crm.Data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
+                            Id = new Guid("7b551db5-19bf-452c-8a64-9872d62e71f6"),
                             CompanyId = new Guid("33333333-3333-3333-3333-333333333333"),
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             IsDeleted = false,

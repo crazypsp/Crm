@@ -11,8 +11,6 @@ namespace Crm.Services.Banking
             try
             {
                 using var doc = PdfDocument.Open(file);
-
-                // MVP: sayfa metinlerini satır satır topla
                 var rows = new List<RawRow>();
                 int rowNo = 1;
 
@@ -23,7 +21,6 @@ namespace Crm.Services.Banking
 
                     foreach (var line in lines)
                     {
-                        // MVP: tek hücreli satır (sonra regex ile parse edilecek)
                         var cells = new Dictionary<string, string?> { ["LINE"] = line.Trim() };
                         rows.Add(new RawRow(rowNo++, cells));
                     }

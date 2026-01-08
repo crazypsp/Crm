@@ -8,7 +8,7 @@ namespace Crm.Services.Banking
         IReadOnlyList<BankTransaction> NormalizeExcelRows(
             Guid tenantId,
             Guid importId,
-            IReadOnlyDictionary<string, string> columnMap, // date/valueDate/ref/amount/balance/desc -> Excel başlıkları
+            IReadOnlyDictionary<string, string> columnMap,
             IReadOnlyList<RawRow> rows);
     }
 }

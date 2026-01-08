@@ -12,6 +12,7 @@ namespace Crm.Entities.Enums
         Running = 2,
         Succeeded = 3,
         InProgress,
-        Failed = 99
+        Failed = 99,
+        DeadLetter = 100
     }
 }

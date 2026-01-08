@@ -20,14 +20,12 @@ namespace Crm.Services.Banking
                 if (string.IsNullOrWhiteSpace(s))
                     throw new ParseException("Tarih alanı boş.");
 
-                // Bankalar genelde dd.MM.yyyy kullanır; gerekirse genişletilir.
                 return DateTime.ParseExact(s.Trim(), "dd.MM.yyyy", Tr);
             }
 
             decimal ParseMoney(string? s)
             {
                 if (string.IsNullOrWhiteSpace(s)) return 0m;
-                // "3.387.645,19" -> "3387645.19"
                 var x = s.Trim().Replace(".", "").Replace(",", ".");
                 return decimal.Parse(x, CultureInfo.InvariantCulture);
             }
@@ -39,7 +37,6 @@ namespace Crm.Services.Banking
 
             foreach (var rr in rows)
             {
-                // ColumnMap: internal key -> excel header
                 if (!map.TryGetValue("date", out var dateHeader) ||
                     !map.TryGetValue("desc", out var descHeader) ||
                     !map.TryGetValue("amount", out var amountHeader) ||
@@ -51,7 +48,6 @@ namespace Crm.Services.Banking
                     TenantId = tenantId,
                     ImportId = importId,
                     RowNo = rr.RowNo,
-
                     TransactionDate = ParseDate(Get(rr, dateHeader)),
                     Description = (Get(rr, descHeader) ?? "").Trim(),
                     Amount = ParseMoney(Get(rr, amountHeader)),

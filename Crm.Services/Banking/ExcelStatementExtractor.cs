@@ -13,7 +13,6 @@ namespace Crm.Services.Banking
                 using var wb = new XLWorkbook(file);
                 var ws = wb.Worksheets.First();
 
-                // Başlık satırını bulma (MVP): ilk 25 satır
                 var headerRow = -1;
                 var headerMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
@@ -49,7 +48,6 @@ namespace Crm.Services.Banking
 
                 for (int r = headerRow + 1; r <= last; r++)
                 {
-                    // Boş satırları atla
                     var dateCell = headerMap.TryGetValue("TARİH", out var dcol) ? ws.Cell(r, dcol).GetString() : null;
                     var descCell = headerMap.TryGetValue("AÇIKLAMA", out var ecol) ? ws.Cell(r, ecol).GetString() : null;
                     if (string.IsNullOrWhiteSpace(dateCell) && string.IsNullOrWhiteSpace(descCell))

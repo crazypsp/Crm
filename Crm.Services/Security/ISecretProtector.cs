@@ -1,5 +1,4 @@
-﻿
-namespace Crm.Services.Security
+﻿namespace Crm.Services.Security
 {
     public interface ISecretProtector
     {

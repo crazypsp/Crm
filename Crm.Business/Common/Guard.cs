@@ -1,54 +1,38 @@
-﻿namespace Crm.Business.Common;
-
-/// <summary>
-/// Neden: Business katmanındaki tüm doğrulama çağrılarını tek noktada standardize etmek.
-/// 
-/// Bu sınıf "geriye dönük uyum" için iki isim setini de içerir:
-/// - NotNull / NotEmpty / NotBlank
-/// - AgainstNull / AgainstNullOrWhiteSpace
-/// 
-/// Böylece projede farklı dosyalarda farklı isimlerle yapılan guard çağrıları build'i bozmaz.
-/// </summary>
-public static class Guard
+﻿public static class Guard
 {
-    // ----------------------------
-    // Yeni/okunaklı API (Not*)
-    // ----------------------------
-
-    public static void NotNull(object? value, string name)
+    // Yeni API
+    public static void NotNull(object? value, string paramName)
     {
         if (value is null)
-            throw new ArgumentNullException(name);
+            throw new ArgumentNullException(paramName);
     }
 
-    public static void NotEmpty(Guid value, string name)
+    public static void NotEmpty(Guid value, string paramName)
     {
         if (value == Guid.Empty)
-            throw new ArgumentException($"{name} cannot be empty.", name);
+            throw new ArgumentException($"{paramName} cannot be empty.", paramName);
     }
 
-    public static void NotEmpty(string? value, string name)
+    public static void NotEmpty(string? value, string paramName)
     {
         if (value is null)
-            throw new ArgumentNullException(name);
-
+            throw new ArgumentNullException(paramName);
         if (value.Length == 0)
-            throw new ArgumentException($"{name} cannot be empty.", name);
+            throw new ArgumentException($"{paramName} cannot be empty.", paramName);
     }
 
-    public static void NotBlank(string? value, string name)
+    public static void NotBlank(string? value, string paramName)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException($"{name} cannot be blank.", name);
+            throw new ArgumentException($"{paramName} cannot be blank.", paramName);
     }
 
-    public static void NotEmpty<T>(IEnumerable<T>? value, string name)
+    public static void NotEmpty<T>(IEnumerable<T>? value, string paramName)
     {
         if (value is null)
-            throw new ArgumentNullException(name);
-
+            throw new ArgumentNullException(paramName);
         if (!value.Any())
-            throw new ArgumentException($"{name} cannot be empty.", name);
+            throw new ArgumentException($"{paramName} cannot be empty.", paramName);
     }
 
     public static void Against(bool condition, string message)
@@ -57,21 +41,22 @@ public static class Guard
             throw new ArgumentException(message);
     }
 
-    // -----------------------------------------
-    // Geriye dönük uyum API (Against*)
-    // -----------------------------------------
+    public static void InRange(int value, int min, int max, string paramName)
+    {
+        if (value < min || value > max)
+            throw new ArgumentOutOfRangeException(paramName, $"{paramName} must be between {min} and {max}.");
+    }
 
-    /// <summary>
-    /// Neden: Eski kodların kullandığı isim (AgainstNull). NotNull ile aynı iş.
-    /// </summary>
+    public static void GreaterThan(decimal value, decimal min, string paramName)
+    {
+        if (value <= min)
+            throw new ArgumentException($"{paramName} must be greater than {min}.", paramName);
+    }
+
+    // Geriye dönük uyum API
     public static void AgainstNull(object? value, string paramName)
         => NotNull(value, paramName);
 
-    /// <summary>
-    /// Neden: Eski kodların kullandığı isim (AgainstNullOrWhiteSpace). NotBlank ile aynı iş.
-    /// </summary>
     public static void AgainstNullOrWhiteSpace(string? value, string paramName)
         => NotBlank(value, paramName);
-
-    
 }

@@ -5,7 +5,12 @@ namespace Crm.Business.Banking
 {
     public sealed class VoucherDraftBuilder : IVoucherDraftBuilder
     {
-        public VoucherDraft Build(Guid tenantId, Guid companyId, Guid importId, string bankAccountCode, IReadOnlyList<BankTransaction> txs)
+        public VoucherDraft Build(
+            Guid tenantId,
+            Guid companyId,
+            Guid importId,
+            string bankAccountCode,
+            IReadOnlyList<BankTransaction> transactions)
         {
             Guard.NotEmpty(tenantId, nameof(tenantId));
             Guard.NotEmpty(companyId, nameof(companyId));
@@ -17,70 +22,70 @@ namespace Crm.Business.Banking
                 TenantId = tenantId,
                 CompanyId = companyId,
                 ImportId = importId,
-                VoucherDate = txs.Count == 0 ? DateTime.Today : txs.Min(x => x.TransactionDate),
+                VoucherDate = transactions.Count == 0 ? DateTime.Today : transactions.Min(x => x.TransactionDate),
                 Description = "Banka Ekstresi Fişi",
                 BankAccountCode = bankAccountCode.Trim()
             };
 
             var lineNo = 1;
 
-            foreach (var tx in txs)
+            foreach (var transaction in transactions)
             {
-                var counter = tx.ApprovedCounterAccountCode ?? tx.SuggestedCounterAccountCode;
+                var counter = transaction.ApprovedCounterAccountCode ?? transaction.SuggestedCounterAccountCode;
                 if (string.IsNullOrWhiteSpace(counter))
-                    continue; // MVP: eşleşmeyen satır kullanıcıya bırakılır
+                    continue;
 
-                var amt = Math.Abs(tx.Amount);
+                var amount = Math.Abs(transaction.Amount);
 
-                // Çıkış (Amount < 0): Gider BORÇ, Banka ALACAK
-                if (tx.Amount < 0)
+                if (transaction.Amount < 0) // Çıkış
                 {
                     draft.Lines.Add(new VoucherDraftLine
                     {
                         TenantId = tenantId,
                         LineNo = lineNo++,
                         AccountCode = counter,
-                        Debit = amt,
+                        Debit = amount,
                         Credit = 0m,
-                        LineDescription = tx.Description
+                        LineDescription = transaction.Description
                     });
+
                     draft.Lines.Add(new VoucherDraftLine
                     {
                         TenantId = tenantId,
                         LineNo = lineNo++,
                         AccountCode = bankAccountCode,
                         Debit = 0m,
-                        Credit = amt,
-                        LineDescription = tx.Description
+                        Credit = amount,
+                        LineDescription = transaction.Description
                     });
                 }
-                // Giriş (Amount > 0): Banka BORÇ, Gelir/karşı hesap ALACAK
-                else
+                else // Giriş
                 {
                     draft.Lines.Add(new VoucherDraftLine
                     {
                         TenantId = tenantId,
                         LineNo = lineNo++,
                         AccountCode = bankAccountCode,
-                        Debit = amt,
+                        Debit = amount,
                         Credit = 0m,
-                        LineDescription = tx.Description
+                        LineDescription = transaction.Description
                     });
+
                     draft.Lines.Add(new VoucherDraftLine
                     {
                         TenantId = tenantId,
                         LineNo = lineNo++,
                         AccountCode = counter,
                         Debit = 0m,
-                        Credit = amt,
-                        LineDescription = tx.Description
+                        Credit = amount,
+                        LineDescription = transaction.Description
                     });
                 }
             }
 
-            // Fiş bütünlüğü (debit==credit) iş kuralıdır
             var debit = draft.Lines.Sum(x => x.Debit);
             var credit = draft.Lines.Sum(x => x.Credit);
+
             if (debit != credit)
                 throw new ValidationException($"Fiş dengesiz: Borç={debit}, Alacak={credit}");
 

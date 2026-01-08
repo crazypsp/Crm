@@ -92,9 +92,10 @@ public class CrmDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
         b.Entity<Dealer>(e =>
         {
             e.HasOne(x => x.ParentDealer)
-             .WithMany(x => x.SubDealers)
-             .HasForeignKey(x => x.ParentDealerId)
-             .OnDelete(DeleteBehavior.NoAction);
+                .WithMany(x => x.SubDealers)
+                .HasForeignKey(x => x.ParentDealerId)
+                .IsRequired(false)  // Nullable olduğu için
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         // 3.0.1 Tenant -> Dealer

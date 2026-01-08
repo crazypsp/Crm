@@ -20,6 +20,14 @@ namespace Crm.Entities.Tenancy
         [MaxLength(EntityConstants.EmailMax)]
         public string? Email { get; set; }
 
+        // Hiyerarşik ilişki: Bir bayi bir üst bayiye sahip olabilir (opsiyonel)
+        public Guid? ParentDealerId { get; set; }
+        public Dealer? ParentDealer { get; set; }
+
+        // Bir bayi birden çok alt bayiye sahip olabilir
+        public ICollection<Dealer> SubDealers { get; set; } = new List<Dealer>();
+
+        // Bir bayi birden çok tenant (mali müşavir ofisi) yönetebilir
         public ICollection<Tenant> Tenants { get; set; } = new List<Tenant>();
     }
 }

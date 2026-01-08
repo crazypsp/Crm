@@ -7,21 +7,22 @@ namespace Crm.Services.Storage
     {
         private readonly FileStorageOptions _opt;
 
-        public LocalFileStorage(IOptions<FileStorageOptions> opt) => _opt = opt.Value;
+        public LocalFileStorage(IOptions<FileStorageOptions> opt)
+        {
+            _opt = opt.Value;
+        }
 
         public async Task<string> SaveAsync(Stream content, string fileName, CancellationToken ct)
         {
             try
             {
                 Directory.CreateDirectory(_opt.RootPath);
-
                 var safeName = $"{Guid.NewGuid():N}_{Path.GetFileName(fileName)}";
                 var path = Path.Combine(_opt.RootPath, safeName);
 
                 await using var fs = File.Create(path);
                 await content.CopyToAsync(fs, ct);
 
-                // DB’de saklayacağımız “storagePath” budur.
                 return path;
             }
             catch (Exception ex)
