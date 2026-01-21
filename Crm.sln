@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Import", "Crm.Api.I
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Api.Shared", "Crm.Api.Shared\Crm.Api.Shared.csproj", "{13B75EBC-2B5A-45A0-AAF0-F51122171C0C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crm.Web", "Crm.Web\Crm.Web.csproj", "{DB1369CC-D915-44BA-BE61-D7084076A30E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,10 @@ Global
 		{13B75EBC-2B5A-45A0-AAF0-F51122171C0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13B75EBC-2B5A-45A0-AAF0-F51122171C0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13B75EBC-2B5A-45A0-AAF0-F51122171C0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB1369CC-D915-44BA-BE61-D7084076A30E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB1369CC-D915-44BA-BE61-D7084076A30E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB1369CC-D915-44BA-BE61-D7084076A30E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB1369CC-D915-44BA-BE61-D7084076A30E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

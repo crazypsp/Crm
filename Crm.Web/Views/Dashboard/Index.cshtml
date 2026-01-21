@@ -1,0 +1,177 @@
+﻿@model Crm.Web.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+@section Styles {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+}
+
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 id="totalCustomers">0</h3>
+            <p>Toplam Müşteri</p>
+            <div class="progress" style="height: 5px;">
+                <div class="progress-bar customer-progress" role="progressbar" style="width: 0%"></div>
+            </div>
+            <small class="text-muted"><span id="activeCustomers">0</span> aktif müşteri</small>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="stat-icon bg-success bg-opacity-10 text-success">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <h3 id="monthlyRevenue">0 TL</h3>
+            <p>Aylık Ciro</p>
+            <div class="progress" style="height: 5px;">
+                <div class="progress-bar bg-success" role="progressbar" style="width: 75%"></div>
+            </div>
+            <small class="text-muted">Toplam: <span id="totalRevenue">0 TL</span></small>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <h3 id="pendingDocuments">0</h3>
+            <p>Bekleyen Evrak</p>
+            <div class="progress" style="height: 5px;">
+                <div class="progress-bar bg-warning" role="progressbar" style="width: 40%"></div>
+            </div>
+            <small class="text-muted">Son 7 günde 12 evrak</small>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="stat-icon bg-info bg-opacity-10 text-info">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <h3 id="completedTasks">0</h3>
+            <p>Tamamlanan İş</p>
+            <div class="progress" style="height: 5px;">
+                <div class="progress-bar bg-info" role="progressbar" style="width: 60%"></div>
+            </div>
+            <small class="text-muted">Bu ay tamamlanan işler</small>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Son İşlemler</h5>
+            </div>
+            <div class="card-body">
+                <div id="recentActivities">
+                    <!-- İşlemler buraya yüklenecek -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar-times me-2"></i>Yaklaşan Son Tarihler</h5>
+            </div>
+            <div class="card-body">
+                <div id="upcomingDeadlines">
+                    <!-- Tarihler buraya yüklenecek -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            loadDashboardData();
+        });
+
+        function loadDashboardData() {
+            // Modelden JSON verisini al
+            var jsonData = @Html.Raw(Model.JsonData);
+
+            if (jsonData) {
+                // İstatistikleri yükle
+                $('#totalCustomers').text(jsonData.istatistikler.toplamMusteri);
+                $('#activeCustomers').text(jsonData.istatistikler.aktifMusteri);
+                $('#pendingDocuments').text(jsonData.istatistikler.bekleyenEvrak);
+                $('#completedTasks').text(jsonData.istatistikler.buAyTamamlananIs);
+                $('#totalRevenue').text(formatCurrency(jsonData.istatistikler.toplamCiro));
+                $('#monthlyRevenue').text(formatCurrency(jsonData.istatistikler.aylikCiro));
+
+                // Son işlemleri yükle
+                loadRecentActivities(jsonData.sonIslemler);
+
+                // Yaklaşan tarihleri yükle
+                loadUpcomingDeadlines(jsonData.yaklasanSonTarihler);
+            }
+        }
+
+        function loadRecentActivities(activities) {
+            var html = '';
+            activities.forEach(function(activity) {
+                html += `
+                    <div class="activity-item">
+                        <div class="activity-icon bg-${activity.color}">
+                            <i class="fas ${activity.icon}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p class="mb-1">${activity.aciklama}</p>
+                            <small class="text-muted">${activity.tarih}</small>
+                        </div>
+                    </div>
+                `;
+            });
+            $('#recentActivities').html(html);
+        }
+
+        function loadUpcomingDeadlines(deadlines) {
+            var html = '';
+            deadlines.forEach(function(deadline) {
+                var priorityClass = deadline.oncelik === 'yuksek' ? 'danger' :
+                                   deadline.oncelik === 'orta' ? 'warning' : 'info';
+
+                html += `
+                    <div class="deadline-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${deadline.firmaAdi}</h6>
+                                <p class="text-muted mb-0">${deadline.islem}</p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-${priorityClass}">${deadline.kalanGun} gün</span>
+                                <p class="mb-0 small">${formatDate(deadline.sonTarih)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            $('#upcomingDeadlines').html(html);
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            }).format(amount);
+        }
+
+        function formatDate(dateString) {
+            var date = new Date(dateString);
+            return date.toLocaleDateString('tr-TR');
+        }
+    </script>
+}

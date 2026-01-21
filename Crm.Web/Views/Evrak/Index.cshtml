@@ -1,0 +1,98 @@
+﻿@model Crm.Web.Models.EvrakViewModel
+@{
+    ViewData["Title"] = "Evrak Yönetimi";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="fas fa-file-invoice me-2"></i>Evrak Yönetimi</h1>
+    <a href="@Url.Action("Yukle", "Evrak")" class="btn btn-primary">
+        <i class="fas fa-upload me-2"></i>Evrak Yükle
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Evrak Türü</th>
+                        <th>Firma</th>
+                        <th>Evrak No</th>
+                        <th>Tarih</th>
+                        <th>Tutar</th>
+                        <th>Durum</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="evrakTableBody">
+                    <!-- Evraklar buraya yüklenecek -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            loadEvraklar();
+        });
+
+        function loadEvraklar() {
+            var jsonData = @Html.Raw(Model.JsonData);
+
+            if (jsonData) {
+                renderEvrakTable(jsonData);
+            }
+        }
+
+        function renderEvrakTable(evraklar) {
+            var tbody = $('#evrakTableBody');
+            tbody.empty();
+
+            evraklar.forEach(function(evrak) {
+                var durumClass = evrak.durum === 'Onaylandı' ? 'success' :
+                                evrak.durum === 'Beklemede' ? 'warning' : 'danger';
+
+                var row = `
+                    <tr>
+                        <td>
+                            <i class="fas fa-file-pdf text-danger me-2"></i>
+                            ${evrak.evrakTuru}
+                        </td>
+                        <td>${evrak.firmaAdi}</td>
+                        <td>${evrak.evrakNo}</td>
+                        <td>${formatDate(evrak.tarih)}</td>
+                        <td>${evrak.tutar ? formatCurrency(evrak.tutar) : '-'}</td>
+                        <td>
+                            <span class="badge bg-${durumClass}">${evrak.durum}</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewEvrak(${evrak.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+
+        function viewEvrak(id) {
+            alert('Evrak ID: ' + id + ' detayı gösterilecek');
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            }).format(amount);
+        }
+
+        function formatDate(dateString) {
+            var date = new Date(dateString);
+            return date.toLocaleDateString('tr-TR');
+        }
+    </script>
+}

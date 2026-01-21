@@ -1,0 +1,321 @@
+﻿@model Crm.Web.Models.MusteriViewModel
+@{
+    ViewData["Title"] = "Müşteriler";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="fas fa-users me-2"></i>Müşteri Yönetimi</h1>
+    <button class="btn btn-primary" id="addCustomerBtn">
+        <i class="fas fa-plus me-2"></i>Yeni Müşteri
+    </button>
+</div>
+
+<!-- Filtreler -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" id="searchInput" placeholder="Müşteri ara...">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="statusFilter">
+                    <option value="">Tüm Durumlar</option>
+                    <option value="Aktif">Aktif</option>
+                    <option value="Pasif">Pasif</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="sectorFilter">
+                    <option value="">Tüm Sektörler</option>
+                    <option value="İnşaat">İnşaat</option>
+                    <option value="Teknoloji">Teknoloji</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-secondary w-100" id="resetFilters">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Müşteri Tablosu -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="customersTable">
+                <thead>
+                    <tr>
+                        <th>Firma Adı</th>
+                        <th>Vergi No</th>
+                        <th>Sektör</th>
+                        <th>İletişim</th>
+                        <th>Personel</th>
+                        <th>Durum</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="customersTableBody">
+                    <!-- Müşteriler buraya yüklenecek -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Müşteri Ekleme Modalı -->
+<div class="modal fade" id="customerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Yeni Müşteri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="customerForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Firma Adı *</label>
+                            <input type="text" class="form-control" id="firmaAdi" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Vergi No *</label>
+                            <input type="text" class="form-control" id="vergiNo" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Telefon</label>
+                            <input type="text" class="form-control" id="telefon">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sektör</label>
+                            <select class="form-select" id="sektor">
+                                <option value="">Seçiniz</option>
+                                <option value="İnşaat">İnşaat</option>
+                                <option value="Teknoloji">Teknoloji</option>
+                                <option value="Ticaret">Ticaret</option>
+                                <option value="Hizmet">Hizmet</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Durum</label>
+                            <select class="form-select" id="durum">
+                                <option value="Aktif">Aktif</option>
+                                <option value="Pasif">Pasif</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="saveCustomerBtn">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            loadCustomers();
+            bindEvents();
+        });
+
+        function loadCustomers() {
+            var jsonData = @Html.Raw(Model.JsonData);
+            var filters = @Html.Raw(Model.FiltreJson);
+
+            if (jsonData) {
+                renderCustomersTable(jsonData);
+            }
+        }
+
+        function renderCustomersTable(customers) {
+            var tbody = $('#customersTableBody');
+            tbody.empty();
+
+            customers.forEach(function(customer) {
+                var row = `
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="${customer.logo}" alt="${customer.firmaAdi}"
+                                     class="rounded-circle me-3" width="40" height="40">
+                                <div>
+                                    <h6 class="mb-0">${customer.firmaAdi}</h6>
+                                    <small class="text-muted">${customer.vergiDairesi}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${customer.vergiNo}</td>
+                        <td>
+                            <span class="badge bg-light text-dark">${customer.sektor}</span>
+                        </td>
+                        <td>
+                            <div><i class="fas fa-phone me-1"></i> ${customer.telefon}</div>
+                            <div><i class="fas fa-envelope me-1"></i> ${customer.email}</div>
+                        </td>
+                        <td>
+                            ${customer.personelId ?
+                              `<span class="badge bg-info">${customer.personelAdi}</span>` :
+                              '<span class="badge bg-secondary">Atanmadı</span>'}
+                        </td>
+                        <td>
+                            <span class="badge ${customer.durum === 'Aktif' ? 'bg-success' : 'bg-danger'}">
+                                ${customer.durum}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="viewCustomer(${customer.id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-warning" onclick="editCustomer(${customer.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteCustomer(${customer.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+
+        function bindEvents() {
+            // Arama
+            $('#searchInput').on('keyup', function() {
+                filterCustomers();
+            });
+
+            // Filtreler
+            $('#statusFilter, #sectorFilter').on('change', function() {
+                filterCustomers();
+            });
+
+            // Filtreleri sıfırla
+            $('#resetFilters').click(function() {
+                $('#searchInput').val('');
+                $('#statusFilter').val('');
+                $('#sectorFilter').val('');
+                filterCustomers();
+            });
+
+            // Yeni müşteri ekle
+            $('#addCustomerBtn').click(function() {
+                $('#modalTitle').text('Yeni Müşteri');
+                $('#customerForm')[0].reset();
+                $('#customerModal').modal('show');
+            });
+
+            // Müşteri kaydet
+            $('#saveCustomerBtn').click(function() {
+                saveCustomer();
+            });
+        }
+
+        function filterCustomers() {
+            var search = $('#searchInput').val().toLowerCase();
+            var status = $('#statusFilter').val();
+            var sector = $('#sectorFilter').val();
+
+            $('#customersTableBody tr').each(function() {
+                var $row = $(this);
+                var firmaAdi = $row.find('td:eq(0) h6').text().toLowerCase();
+                var vergiNo = $row.find('td:eq(1)').text();
+                var sektor = $row.find('td:eq(2) .badge').text();
+                var durum = $row.find('td:eq(5) .badge').text();
+
+                var matchesSearch = !search ||
+                    firmaAdi.includes(search) ||
+                    vergiNo.includes(search);
+
+                var matchesStatus = !status || durum === status;
+                var matchesSector = !sector || sektor === sector;
+
+                if (matchesSearch && matchesStatus && matchesSector) {
+                    $row.show();
+                } else {
+                    $row.hide();
+                }
+            });
+        }
+
+        function saveCustomer() {
+            var customer = {
+                firmaAdi: $('#firmaAdi').val(),
+                vergiNo: $('#vergiNo').val(),
+                telefon: $('#telefon').val(),
+                email: $('#email').val(),
+                sektor: $('#sektor').val(),
+                durum: $('#durum').val()
+            };
+
+            $.ajax({
+                url: '@Url.Action("SaveMusteri", "Musteri")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(customer),
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message);
+                        $('#customerModal').modal('hide');
+                        loadCustomers();
+                    }
+                }
+            });
+        }
+
+        function viewCustomer(id) {
+            $.ajax({
+                url: '@Url.Action("GetMusteriById", "Musteri")',
+                type: 'POST',
+                data: { id: id },
+                success: function(customer) {
+                    alert('Müşteri Detayı: ' + customer.firmaAdi);
+                }
+            });
+        }
+
+        function editCustomer(id) {
+            $.ajax({
+                url: '@Url.Action("GetMusteriById", "Musteri")',
+                type: 'POST',
+                data: { id: id },
+                success: function(customer) {
+                    $('#modalTitle').text('Müşteri Düzenle');
+                    $('#firmaAdi').val(customer.firmaAdi);
+                    $('#vergiNo').val(customer.vergiNo);
+                    $('#telefon').val(customer.telefon);
+                    $('#email').val(customer.email);
+                    $('#sektor').val(customer.sektor);
+                    $('#durum').val(customer.durum);
+                    $('#customerModal').modal('show');
+                }
+            });
+        }
+
+        function deleteCustomer(id) {
+            if (confirm('Bu müşteriyi silmek istediğinizden emin misiniz?')) {
+                $.ajax({
+                    url: '@Url.Action("DeleteMusteri", "Musteri")',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            loadCustomers();
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+}

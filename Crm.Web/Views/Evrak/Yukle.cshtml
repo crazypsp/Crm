@@ -1,0 +1,115 @@
+﻿@{
+    ViewData["Title"] = "Evrak Yükle";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Evrak Yükle</h5>
+    </div>
+    <div class="card-body">
+        <form id="uploadForm">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Firma *</label>
+                    <select class="form-select" id="firmaId" required>
+                        <option value="">Firma Seçin</option>
+                        <!-- Firmalar buraya yüklenecek -->
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Evrak Türü *</label>
+                    <select class="form-select" id="evrakTuru" required>
+                        <option value="">Tür Seçin</option>
+                        <option value="Fatura">Fatura</option>
+                        <option value="Banka Ekstresi">Banka Ekstresi</option>
+                        <option value="Beyanname">Beyanname</option>
+                        <option value="Sözleşme">Sözleşme</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Evrak No</label>
+                    <input type="text" class="form-control" id="evrakNo">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Tarih</label>
+                    <input type="date" class="form-control" id="tarih">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Tutar (TL)</label>
+                    <input type="number" class="form-control" id="tutar" step="0.01">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Dosya *</label>
+                    <input type="file" class="form-control" id="dosya" accept=".pdf,.jpg,.jpeg,.png" required>
+                    <small class="text-muted">PDF, JPG, PNG formatları desteklenir (Max: 5MB)</small>
+                </div>
+                <div class="col-12 mb-3">
+                    <label class="form-label">Açıklama</label>
+                    <textarea class="form-control" id="aciklama" rows="3"></textarea>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <a href="@Url.Action("Index", "Evrak")" class="btn btn-secondary me-2">İptal</a>
+                <button type="submit" class="btn btn-primary">Yükle</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            loadFirmalar();
+            bindEvents();
+        });
+
+        function loadFirmalar() {
+            var musterilerJson = '@Html.Raw(ViewBag.Musteriler)';
+            if (musterilerJson) {
+                var musteriler = JSON.parse(musterilerJson);
+                var select = $('#firmaId');
+
+                musteriler.forEach(function(musteri) {
+                    select.append(`<option value="${musteri.id}">${musteri.firmaAdi}</option>`);
+                });
+            }
+        }
+
+        function bindEvents() {
+            $('#uploadForm').submit(function(e) {
+                e.preventDefault();
+                uploadEvrak();
+            });
+        }
+
+        function uploadEvrak() {
+            var formData = new FormData();
+            formData.append('firmaId', $('#firmaId').val());
+            formData.append('evrakTuru', $('#evrakTuru').val());
+            formData.append('evrakNo', $('#evrakNo').val());
+            formData.append('tarih', $('#tarih').val());
+            formData.append('tutar', $('#tutar').val());
+            formData.append('aciklama', $('#aciklama').val());
+
+            var fileInput = $('#dosya')[0];
+            if (fileInput.files.length > 0) {
+                formData.append('dosya', fileInput.files[0]);
+            }
+
+            $.ajax({
+                url: '@Url.Action("SaveEvrak", "Evrak")',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message);
+                        window.location.href = '@Url.Action("Index", "Evrak")';
+                    }
+                }
+            });
+        }
+    </script>
+}

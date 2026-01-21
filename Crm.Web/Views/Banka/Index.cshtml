@@ -1,0 +1,88 @@
+﻿@{
+    ViewData["Title"] = "Banka Hareketleri";
+}
+
+<h1 class="h3 mb-4"><i class="fas fa-university me-2"></i>Banka Hareketleri</h1>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Firma</th>
+                        <th>Hesap No</th>
+                        <th>Banka</th>
+                        <th>İşlem Tarihi</th>
+                        <th>Açıklama</th>
+                        <th>Tutar</th>
+                        <th>Bakiye</th>
+                        <th>Durum</th>
+                    </tr>
+                </thead>
+                <tbody id="bankaTableBody">
+                    <!-- Banka hareketleri buraya yüklenecek -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            loadBankaHareketleri();
+        });
+
+        function loadBankaHareketleri() {
+            var jsonData = @Html.Raw(ViewBag.JsonData);
+
+            if (jsonData) {
+                renderBankaTable(jsonData);
+            }
+        }
+
+        function renderBankaTable(hareketler) {
+            var tbody = $('#bankaTableBody');
+            tbody.empty();
+
+            hareketler.forEach(function(hareket) {
+                var tutarClass = hareket.tutar >= 0 ? 'text-success' : 'text-danger';
+                var islemTuruIcon = hareket.islemTuru === 'Gelen' ? 'fa-arrow-down text-success' : 'fa-arrow-up text-danger';
+
+                var row = `
+                    <tr>
+                        <td>${hareket.firmaAdi}</td>
+                        <td>${hareket.hesapNo}</td>
+                        <td>${hareket.bankaAdi}</td>
+                        <td>${formatDate(hareket.islemTarihi)}</td>
+                        <td>${hareket.aciklama}</td>
+                        <td class="${tutarClass}">
+                            <i class="fas ${islemTuruIcon} me-1"></i>
+                            ${formatCurrency(hareket.tutar)}
+                        </td>
+                        <td>${formatCurrency(hareket.bakiye)}</td>
+                        <td>
+                            <span class="badge ${hareket.durum === 'Eşleşti' ? 'bg-success' : 'bg-warning'}">
+                                ${hareket.durum}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            }).format(amount);
+        }
+
+        function formatDate(dateString) {
+            var date = new Date(dateString);
+            return date.toLocaleDateString('tr-TR');
+        }
+    </script>
+}

@@ -1,0 +1,132 @@
+/* Temel stiller */
+:root {
+    --primary: #2c3e50;
+    --primary-dark: #1a252f;
+    --secondary: #3498db;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --danger: #e74c3c;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+}
+
+/* Sidebar */
+.sidebar {
+    background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 250px;
+    padding: 20px 0;
+    box-shadow: 3px 0 15px rgba(0,0,0,0.1);
+}
+
+.sidebar-brand {
+    padding: 0 20px 30px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 20px;
+}
+
+.nav-link {
+    color: rgba(255,255,255,0.8) !important;
+    padding: 12px 20px !important;
+    margin: 5px 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+    .nav-link:hover, .nav-link.active {
+        background: rgba(255,255,255,0.1);
+        color: white !important;
+        transform: translateX(5px);
+    }
+
+    .nav-link.active {
+        background: var(--secondary);
+    }
+
+/* Main Content */
+.main-content {
+    margin-left: 250px;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+/* Kartlar */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 25px 15px;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 1.5rem;
+}
+
+/* Tablolar */
+.table th {
+    background: #ecf0f1;
+    border-bottom: 2px solid var(--secondary);
+}
+
+/* Aktivite öðeleri */
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+/* Deadline öðeleri */
+.deadline-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .sidebar {
+        width: 80px;
+    }
+
+        .sidebar .nav-text {
+            display: none;
+        }
+
+    .main-content {
+        margin-left: 80px;
+    }
+}
